@@ -380,7 +380,7 @@ All these projects share the same VPS infrastructure (PostgreSQL, Redis, Traefik
       <a href="https://salamnoor.com">salamnoor.com</a> &nbsp;|&nbsp;
       <a href="https://github.com/alahdal262">GitHub</a> &nbsp;|&nbsp;
       Based in the United Kingdom<br/><br/>
-      Full-stack developer and founder of <strong>Noor Web LTD</strong>. I conceived, designed, and built Mobile-WP from the ground up &mdash; from the initial product vision to the architecture design, from the React builder to the WordPress plugin, from the database schema to the production deployment.<br/><br/>
+      Full-stack developer and founder of <strong>Infragate Solutions LTD</strong>. I conceived, designed, and built Mobile-WP from the ground up &mdash; from the initial product vision to the architecture design, from the React builder to the WordPress plugin, from the database schema to the production deployment.<br/><br/>
       <strong>My philosophy:</strong> think big, ship fast, build things that solve real problems.
     </td>
   </tr>
