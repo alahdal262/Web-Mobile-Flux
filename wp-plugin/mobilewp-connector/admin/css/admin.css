@@ -1,0 +1,117 @@
+.mobilewp-admin {
+	max-width: 900px;
+}
+
+.mobilewp-badge {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 600;
+	background: #e0e7ff;
+	color: #4338ca;
+	padding: 2px 8px;
+	border-radius: 9999px;
+	vertical-align: middle;
+	margin-left: 8px;
+}
+
+.mobilewp-card {
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 20px 24px;
+	margin-bottom: 16px;
+}
+
+.mobilewp-section-title {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0 0 12px 0;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.mobilewp-status-dot {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+.mobilewp-status-dot.connected {
+	background: #16a34a;
+	box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+}
+
+.mobilewp-status-dot.disconnected {
+	background: #dc2626;
+	box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+.mobilewp-status-dot.degraded {
+	background: #d97706;
+	box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+}
+
+.mobilewp-key-field {
+	font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+	font-size: 12px !important;
+	background: #f7f7f7 !important;
+	letter-spacing: 0.5px;
+}
+
+.mobilewp-site-info {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px 24px;
+}
+
+.mobilewp-info-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.mobilewp-info-label {
+	font-weight: 500;
+	color: #666;
+	font-size: 13px;
+}
+
+.mobilewp-info-value {
+	font-weight: 600;
+	color: #1e1e1e;
+	font-size: 13px;
+}
+
+.mobilewp-log-success {
+	color: #16a34a;
+	font-weight: 600;
+}
+
+.mobilewp-log-failed {
+	color: #dc2626;
+	font-weight: 600;
+}
+
+.mobilewp-admin .form-table th {
+	width: 200px;
+	font-weight: 500;
+}
+
+.mobilewp-admin .widefat code {
+	font-size: 12px;
+	background: #f3f4f6;
+	padding: 2px 6px;
+	border-radius: 3px;
+}
+
+@media (max-width: 782px) {
+	.mobilewp-site-info {
+		grid-template-columns: 1fr;
+	}
+}
