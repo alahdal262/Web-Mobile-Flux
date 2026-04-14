@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="fluxbuilder-project/artifacts/fluxbuilder/public/favicon.svg" width="120" height="120" alt="Mobile-WP" />
+  <img src="./brand/logo.svg" width="140" height="140" alt="Mobile-WP logo" />
 </p>
 
 <h1 align="center">Mobile-WP</h1>
@@ -70,13 +70,9 @@ Most "WordPress to app" tools either:
 </p>
 
 <p align="center">
-  <img src="./brand/features/03-wordpress-plugin.svg" width="48%" alt="WordPress Plugin & REST API" />
-  &nbsp;
   <img src="./brand/features/04-phone-preview.svg" width="48%" alt="Realistic Phone Preview" />
-</p>
-
-<p align="center">
-  <img src="./brand/features/05-build-pipeline.svg" width="70%" alt="Stepped Build Pipeline" />
+  &nbsp;
+  <img src="./brand/features/05-build-pipeline.svg" width="48%" alt="Stepped Build Pipeline" />
 </p>
 
 ### Visual Drag-and-Drop Builder

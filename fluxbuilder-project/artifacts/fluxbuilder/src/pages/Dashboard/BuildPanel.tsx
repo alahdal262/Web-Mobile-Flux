@@ -22,7 +22,7 @@ const BUILD_STEPS = [
 export function BuildPanel() {
   const { toast } = useToast();
   const [tab, setTab]       = useState<BuildTab>("ios");
-  const [email, setEmail]   = useState("alahdal262@gmail.com");
+  const [email, setEmail]   = useState("");
   const [token, setToken]   = useState("");
   const [lang, setLang]     = useState("English");
   const [building, setBuilding] = useState(false);

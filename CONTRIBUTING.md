@@ -267,7 +267,7 @@ $wpdb->query( "SELECT * FROM ..." );  // Use WP_Query instead
 
 - **Questions?** Open a [Discussion](https://github.com/alahdal262/Web-Mobile-Flux/discussions)
 - **Bug?** Open an [Issue](https://github.com/alahdal262/Web-Mobile-Flux/issues)
-- **Chat?** Reach out to [@alahdal262](https://github.com/alahdal262)
+- **Company:** [Infragate Solutions LTD](https://infragatesolutions.com/) — the team maintaining Mobile-WP
 
 ---
 
