@@ -67,7 +67,18 @@ export default function Footer() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-          <p>© {new Date().getFullYear()} Mobile-WP Inc. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()}{" "}
+            <a
+              href="https://infragatesolutions.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-violet-400 transition-colors"
+            >
+              Infragate Solutions LTD
+            </a>
+            . All rights reserved.
+          </p>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             <span>All systems operational</span>

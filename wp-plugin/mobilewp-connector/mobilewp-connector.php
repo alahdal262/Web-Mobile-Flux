@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Mobile-WP Connector
- * Plugin URI: https://mobilewp.com
+ * Plugin URI: https://infragatesolutions.com/
  * Description: Connect your WordPress site to Mobile-WP app builder. Exposes REST API endpoints and webhooks for mobile app integration.
  * Version: 1.0.0
- * Author: Mobile-WP
- * Author URI: https://mobilewp.com
+ * Author: Infragate Solutions LTD
+ * Author URI: https://infragatesolutions.com/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: mobilewp-connector

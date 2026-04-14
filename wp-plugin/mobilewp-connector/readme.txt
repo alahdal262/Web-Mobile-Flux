@@ -1,5 +1,5 @@
 === Mobile-WP Connector ===
-Contributors: mobilewp
+Contributors: infragatesolutions
 Tags: mobile app, wordpress, rest api, woocommerce, flutter
 Requires at least: 6.0
 Tested up to: 6.7

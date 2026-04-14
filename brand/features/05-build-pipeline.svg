@@ -1,0 +1,146 @@
+<svg width="480" height="320" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bp-bg" x1="0" y1="0" x2="480" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F4FAFD"/>
+      <stop offset="100%" stop-color="#DBE9F4"/>
+    </linearGradient>
+    <linearGradient id="bp-stage-done" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#22A35A"/>
+    </linearGradient>
+    <linearGradient id="bp-stage-active" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6DC3ED"/>
+      <stop offset="100%" stop-color="#1E7AC4"/>
+    </linearGradient>
+    <linearGradient id="bp-rocket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6DC3ED"/>
+      <stop offset="100%" stop-color="#1E7AC4"/>
+    </linearGradient>
+    <linearGradient id="bp-flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="60%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#DC2626"/>
+    </linearGradient>
+    <filter id="bp-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#123A5C" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="480" height="320" rx="16" fill="url(#bp-bg)"/>
+
+  <!-- Title -->
+  <text x="240" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#123A5C" text-anchor="middle">BUILD PIPELINE</text>
+  <line x1="180" y1="50" x2="300" y2="50" stroke="#1E7AC4" stroke-width="2"/>
+
+  <!-- Pipeline stages -->
+  <g transform="translate(40 85)">
+    <!-- Stage 1: Config (done) -->
+    <g filter="url(#bp-shadow)">
+      <circle cx="30" cy="30" r="26" fill="white"/>
+      <circle cx="30" cy="30" r="22" fill="url(#bp-stage-done)"/>
+      <path d="M 20 30 L 27 37 L 40 24" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+    <text x="30" y="80" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#123A5C" text-anchor="middle">CONFIG</text>
+
+    <!-- Connector line -->
+    <rect x="58" y="28" width="24" height="4" rx="2" fill="#4ADE80"/>
+
+    <!-- Stage 2: Validate (done) -->
+    <g transform="translate(82 0)" filter="url(#bp-shadow)">
+      <circle cx="30" cy="30" r="26" fill="white"/>
+      <circle cx="30" cy="30" r="22" fill="url(#bp-stage-done)"/>
+      <path d="M 20 30 L 27 37 L 40 24" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+    <text x="112" y="80" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#123A5C" text-anchor="middle">VALIDATE</text>
+
+    <rect x="140" y="28" width="24" height="4" rx="2" fill="#4ADE80"/>
+
+    <!-- Stage 3: Compile (active) -->
+    <g transform="translate(164 0)" filter="url(#bp-shadow)">
+      <circle cx="30" cy="30" r="26" fill="white"/>
+      <circle cx="30" cy="30" r="22" fill="url(#bp-stage-active)"/>
+      <!-- Compile icon (gears) -->
+      <g stroke="white" stroke-width="2" fill="none" stroke-linecap="round">
+        <circle cx="30" cy="30" r="7"/>
+        <line x1="30" y1="19" x2="30" y2="21"/>
+        <line x1="30" y1="39" x2="30" y2="41"/>
+        <line x1="19" y1="30" x2="21" y2="30"/>
+        <line x1="39" y1="30" x2="41" y2="30"/>
+        <line x1="22" y1="22" x2="23.5" y2="23.5"/>
+        <line x1="36.5" y1="36.5" x2="38" y2="38"/>
+        <line x1="38" y1="22" x2="36.5" y2="23.5"/>
+        <line x1="23.5" y1="36.5" x2="22" y2="38"/>
+      </g>
+    </g>
+    <text x="194" y="80" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#1E7AC4" text-anchor="middle">COMPILE</text>
+
+    <rect x="222" y="28" width="24" height="4" rx="2" fill="#CBDCE8"/>
+
+    <!-- Stage 4: Sign (pending) -->
+    <g transform="translate(246 0)" filter="url(#bp-shadow)">
+      <circle cx="30" cy="30" r="26" fill="white"/>
+      <circle cx="30" cy="30" r="22" fill="#CBDCE8"/>
+      <!-- Key/lock icon -->
+      <g stroke="#7BA8C8" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <circle cx="26" cy="28" r="5"/>
+        <path d="M 30 28 L 38 28 L 38 34 M 35 28 L 35 32"/>
+      </g>
+    </g>
+    <text x="276" y="80" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#7BA8C8" text-anchor="middle">SIGN</text>
+
+    <rect x="304" y="28" width="24" height="4" rx="2" fill="#CBDCE8"/>
+
+    <!-- Stage 5: Deploy (pending) -->
+    <g transform="translate(328 0)" filter="url(#bp-shadow)">
+      <circle cx="30" cy="30" r="26" fill="white"/>
+      <circle cx="30" cy="30" r="22" fill="#CBDCE8"/>
+      <!-- Upload cloud icon -->
+      <g stroke="#7BA8C8" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 22 32 Q 18 32 18 28 Q 18 24 22 24 Q 22 20 28 20 Q 34 20 34 24 Q 40 24 40 29 Q 40 33 36 33"/>
+        <line x1="30" y1="28" x2="30" y2="38"/>
+        <path d="M 26 32 L 30 28 L 34 32"/>
+      </g>
+    </g>
+    <text x="358" y="80" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#7BA8C8" text-anchor="middle">DEPLOY</text>
+  </g>
+
+  <!-- Rocket launching up -->
+  <g transform="translate(345 180)" filter="url(#bp-shadow)">
+    <!-- Flame -->
+    <path d="M 24 62 Q 18 78 22 90 Q 24 82 26 86 Q 28 76 30 88 Q 32 78 34 90 Q 38 78 32 62 Z" fill="url(#bp-flame)"/>
+    <!-- Rocket body -->
+    <path d="M 20 20 Q 20 8 28 0 Q 36 8 36 20 L 36 58 L 20 58 Z" fill="url(#bp-rocket)"/>
+    <!-- Window -->
+    <circle cx="28" cy="22" r="5" fill="#EAF6FC" stroke="#123A5C" stroke-width="1.5"/>
+    <circle cx="28" cy="22" r="2.5" fill="#1E7AC4"/>
+    <!-- Fins -->
+    <path d="M 20 44 L 12 58 L 20 58 Z" fill="#123A5C"/>
+    <path d="M 36 44 L 44 58 L 36 58 Z" fill="#123A5C"/>
+    <!-- Body line -->
+    <line x1="20" y1="40" x2="36" y2="40" stroke="#123A5C" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- Clouds -->
+  <g fill="white" opacity="0.9">
+    <ellipse cx="70" cy="220" rx="20" ry="8"/>
+    <ellipse cx="85" cy="215" rx="16" ry="7"/>
+    <ellipse cx="170" cy="240" rx="24" ry="9"/>
+    <ellipse cx="188" cy="235" rx="18" ry="7"/>
+    <ellipse cx="260" cy="215" rx="22" ry="8"/>
+  </g>
+
+  <!-- Build log card -->
+  <g transform="translate(40 245)" filter="url(#bp-shadow)">
+    <rect x="0" y="0" width="260" height="50" rx="8" fill="#0F1E2D"/>
+    <rect x="8" y="8" width="6" height="6" rx="3" fill="#EF4444"/>
+    <rect x="18" y="8" width="6" height="6" rx="3" fill="#FBBF24"/>
+    <rect x="28" y="8" width="6" height="6" rx="3" fill="#4ADE80"/>
+    <text x="8" y="28" font-family="ui-monospace, monospace" font-size="7" fill="#4ADE80">✓ config validated</text>
+    <text x="8" y="38" font-family="ui-monospace, monospace" font-size="7" fill="#4ADE80">✓ schema compiled</text>
+    <text x="8" y="46" font-family="ui-monospace, monospace" font-size="7" fill="#6DC3ED">⟳ building bundle...</text>
+  </g>
+
+  <!-- Title -->
+  <text x="240" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="#123A5C" text-anchor="middle">Stepped Build &amp; Deploy Pipeline</text>
+</svg>

@@ -1,0 +1,85 @@
+<svg width="480" height="320" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vb-bg" x1="0" y1="0" x2="480" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F4FAFD"/>
+      <stop offset="100%" stop-color="#DBE9F4"/>
+    </linearGradient>
+    <linearGradient id="vb-phone" x1="180" y1="40" x2="300" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6DC3ED"/>
+      <stop offset="100%" stop-color="#1E7AC4"/>
+    </linearGradient>
+    <linearGradient id="vb-widget-1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#EAF3FA"/>
+    </linearGradient>
+    <filter id="vb-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#123A5C" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="480" height="320" rx="16" fill="url(#vb-bg)"/>
+
+  <!-- Widget palette on left -->
+  <g filter="url(#vb-shadow)">
+    <rect x="30" y="60" width="110" height="30" rx="6" fill="url(#vb-widget-1)" stroke="#B9D5EA" stroke-width="1"/>
+    <rect x="40" y="70" width="14" height="10" rx="2" fill="#1E7AC4"/>
+    <rect x="60" y="71" width="55" height="3" rx="1.5" fill="#123A5C"/>
+    <rect x="60" y="78" width="40" height="2" rx="1" fill="#7BA8C8"/>
+
+    <rect x="30" y="105" width="110" height="30" rx="6" fill="url(#vb-widget-1)" stroke="#B9D5EA" stroke-width="1"/>
+    <rect x="40" y="115" width="14" height="10" rx="2" fill="#3FA1DD"/>
+    <rect x="60" y="116" width="55" height="3" rx="1.5" fill="#123A5C"/>
+    <rect x="60" y="123" width="40" height="2" rx="1" fill="#7BA8C8"/>
+
+    <rect x="30" y="150" width="110" height="30" rx="6" fill="url(#vb-widget-1)" stroke="#B9D5EA" stroke-width="1"/>
+    <rect x="40" y="160" width="14" height="10" rx="2" fill="#6DC3ED"/>
+    <rect x="60" y="161" width="55" height="3" rx="1.5" fill="#123A5C"/>
+    <rect x="60" y="168" width="40" height="2" rx="1" fill="#7BA8C8"/>
+
+    <rect x="30" y="195" width="110" height="30" rx="6" fill="url(#vb-widget-1)" stroke="#B9D5EA" stroke-width="1"/>
+    <rect x="40" y="205" width="14" height="10" rx="2" fill="#145785"/>
+    <rect x="60" y="206" width="55" height="3" rx="1.5" fill="#123A5C"/>
+    <rect x="60" y="213" width="40" height="2" rx="1" fill="#7BA8C8"/>
+  </g>
+
+  <!-- Phone frame in center -->
+  <g filter="url(#vb-shadow)">
+    <rect x="195" y="40" width="130" height="240" rx="22" fill="#123A5C"/>
+    <rect x="200" y="45" width="120" height="230" rx="17" fill="url(#vb-phone)"/>
+    <rect x="254" y="50" width="12" height="2.4" rx="1.2" fill="#123A5C"/>
+
+    <!-- Widgets on phone screen -->
+    <rect x="208" y="62" width="104" height="38" rx="5" fill="white" fill-opacity="0.92"/>
+    <rect x="214" y="70" width="60" height="3" rx="1.5" fill="#123A5C"/>
+    <rect x="214" y="78" width="80" height="2" rx="1" fill="#3FA1DD"/>
+    <rect x="214" y="84" width="50" height="2" rx="1" fill="#7BA8C8"/>
+
+    <rect x="208" y="108" width="104" height="60" rx="5" fill="white" fill-opacity="0.92"/>
+    <circle cx="236" cy="138" r="10" fill="#6DC3ED" fill-opacity="0.4"/>
+    <rect x="252" y="122" width="52" height="3" rx="1.5" fill="#123A5C"/>
+    <rect x="252" y="130" width="40" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="252" y="138" width="52" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="252" y="146" width="30" height="2" rx="1" fill="#7BA8C8"/>
+
+    <!-- Highlighted drop zone -->
+    <rect x="208" y="176" width="104" height="44" rx="5" fill="#FFFFFF" fill-opacity="0.6" stroke="#1E7AC4" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="260" y="202" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600" fill="#1E7AC4" text-anchor="middle">Drop here</text>
+  </g>
+
+  <!-- Dragging widget -->
+  <g transform="translate(355 145) rotate(-6)" filter="url(#vb-shadow)">
+    <rect x="0" y="0" width="100" height="40" rx="6" fill="#FFFFFF" stroke="#1E7AC4" stroke-width="2"/>
+    <rect x="10" y="12" width="16" height="16" rx="3" fill="#1E7AC4"/>
+    <rect x="34" y="14" width="52" height="3.5" rx="1.5" fill="#123A5C"/>
+    <rect x="34" y="23" width="38" height="2.5" rx="1" fill="#7BA8C8"/>
+  </g>
+
+  <!-- Cursor -->
+  <g transform="translate(360 175)">
+    <path d="M 0 0 L 0 18 L 5 14 L 8 20 L 11 19 L 8 13 L 14 13 Z" fill="#FFFFFF" stroke="#123A5C" stroke-width="1.4" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Title -->
+  <text x="240" y="305" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="#123A5C" text-anchor="middle">Visual Drag &amp; Drop Builder</text>
+</svg>

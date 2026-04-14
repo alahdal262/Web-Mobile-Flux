@@ -1,0 +1,131 @@
+<svg width="480" height="320" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pp-bg" x1="0" y1="0" x2="480" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F4FAFD"/>
+      <stop offset="100%" stop-color="#DBE9F4"/>
+    </linearGradient>
+    <linearGradient id="pp-iphone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6DC3ED"/>
+      <stop offset="100%" stop-color="#1E7AC4"/>
+    </linearGradient>
+    <linearGradient id="pp-android" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8BD0F0"/>
+      <stop offset="100%" stop-color="#2D8FC9"/>
+    </linearGradient>
+    <filter id="pp-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#123A5C" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="480" height="320" rx="16" fill="url(#pp-bg)"/>
+
+  <!-- Device switcher tabs at top -->
+  <g transform="translate(160 30)">
+    <rect x="0" y="0" width="160" height="32" rx="16" fill="white" filter="url(#pp-shadow)"/>
+    <rect x="4" y="4" width="76" height="24" rx="12" fill="#1E7AC4"/>
+    <!-- Apple icon -->
+    <g transform="translate(22 11)">
+      <path d="M 8 2 Q 10 0 12 2 Q 13 1 14 3 Q 14.5 4 14 5 Q 15 6 15 8 Q 15 11 13 12 Q 11 12 10 11 Q 9 12 8 12 Q 6 11 5 8 Q 5 5 6 4 Q 7 2 8 2 Z" fill="white"/>
+      <path d="M 10 0 Q 11 0 12 1 Q 11 2 10 2 Z" fill="white"/>
+    </g>
+    <text x="46" y="20" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="white">iOS</text>
+
+    <rect x="84" y="4" width="72" height="24" rx="12" fill="transparent"/>
+    <!-- Android icon -->
+    <g transform="translate(100 13)" fill="#1E7AC4">
+      <rect x="2" y="2" width="12" height="10" rx="1"/>
+      <rect x="4" y="12" width="1.5" height="3" rx="0.5"/>
+      <rect x="10.5" y="12" width="1.5" height="3" rx="0.5"/>
+      <circle cx="5" cy="5" r="0.6" fill="white"/>
+      <circle cx="11" cy="5" r="0.6" fill="white"/>
+      <line x1="1" y1="1" x2="3" y2="3" stroke="#1E7AC4" stroke-width="0.8"/>
+      <line x1="15" y1="1" x2="13" y2="3" stroke="#1E7AC4" stroke-width="0.8"/>
+    </g>
+    <text x="128" y="20" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#1E7AC4">Android</text>
+  </g>
+
+  <!-- iPhone (left) -->
+  <g transform="translate(90 80)" filter="url(#pp-shadow)">
+    <rect x="0" y="0" width="120" height="200" rx="22" fill="#123A5C"/>
+    <rect x="4" y="4" width="112" height="192" rx="18" fill="url(#pp-iphone)"/>
+    <!-- Dynamic Island -->
+    <rect x="48" y="10" width="24" height="5" rx="2.5" fill="#123A5C"/>
+
+    <!-- Screen content -->
+    <rect x="12" y="24" width="96" height="28" rx="4" fill="white" fill-opacity="0.95"/>
+    <rect x="18" y="32" width="60" height="3.5" rx="1" fill="#123A5C"/>
+    <rect x="18" y="40" width="42" height="2.5" rx="1" fill="#7BA8C8"/>
+
+    <rect x="12" y="58" width="96" height="60" rx="4" fill="white" fill-opacity="0.95"/>
+    <circle cx="30" cy="88" r="12" fill="#6DC3ED" fill-opacity="0.6"/>
+    <rect x="48" y="66" width="54" height="3" rx="1" fill="#123A5C"/>
+    <rect x="48" y="74" width="48" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="48" y="80" width="54" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="48" y="86" width="40" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="48" y="96" width="30" height="4" rx="2" fill="#1E7AC4"/>
+
+    <rect x="12" y="124" width="46" height="28" rx="4" fill="white" fill-opacity="0.95"/>
+    <rect x="62" y="124" width="46" height="28" rx="4" fill="white" fill-opacity="0.95"/>
+
+    <rect x="12" y="158" width="96" height="18" rx="4" fill="white" fill-opacity="0.95"/>
+    <circle cx="22" cy="167" r="4" fill="#1E7AC4"/>
+    <rect x="32" y="163" width="50" height="3" rx="1" fill="#123A5C"/>
+    <rect x="32" y="170" width="36" height="2" rx="1" fill="#7BA8C8"/>
+
+    <!-- Home indicator -->
+    <rect x="48" y="184" width="24" height="3" rx="1.5" fill="#123A5C"/>
+  </g>
+
+  <!-- Android (right) -->
+  <g transform="translate(270 80)" filter="url(#pp-shadow)">
+    <rect x="0" y="0" width="120" height="200" rx="16" fill="#123A5C"/>
+    <rect x="4" y="4" width="112" height="192" rx="12" fill="url(#pp-android)"/>
+
+    <!-- Punch hole camera -->
+    <circle cx="60" cy="12" r="3" fill="#123A5C"/>
+
+    <!-- Status bar -->
+    <rect x="12" y="8" width="30" height="2" rx="1" fill="#123A5C" fill-opacity="0.55"/>
+    <rect x="88" y="8" width="16" height="2" rx="1" fill="#123A5C" fill-opacity="0.55"/>
+
+    <!-- Screen content -->
+    <rect x="12" y="22" width="96" height="28" rx="4" fill="white" fill-opacity="0.95"/>
+    <rect x="18" y="32" width="60" height="3.5" rx="1" fill="#123A5C"/>
+    <rect x="18" y="40" width="42" height="2.5" rx="1" fill="#7BA8C8"/>
+
+    <rect x="12" y="58" width="96" height="60" rx="4" fill="white" fill-opacity="0.95"/>
+    <circle cx="30" cy="88" r="12" fill="#8BD0F0" fill-opacity="0.6"/>
+    <rect x="48" y="66" width="54" height="3" rx="1" fill="#123A5C"/>
+    <rect x="48" y="74" width="48" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="48" y="80" width="54" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="48" y="86" width="40" height="2" rx="1" fill="#7BA8C8"/>
+    <rect x="48" y="96" width="30" height="4" rx="2" fill="#2D8FC9"/>
+
+    <rect x="12" y="124" width="46" height="28" rx="4" fill="white" fill-opacity="0.95"/>
+    <rect x="62" y="124" width="46" height="28" rx="4" fill="white" fill-opacity="0.95"/>
+
+    <rect x="12" y="158" width="96" height="18" rx="4" fill="white" fill-opacity="0.95"/>
+    <circle cx="22" cy="167" r="4" fill="#2D8FC9"/>
+    <rect x="32" y="163" width="50" height="3" rx="1" fill="#123A5C"/>
+    <rect x="32" y="170" width="36" height="2" rx="1" fill="#7BA8C8"/>
+
+    <!-- Nav bar (Android) -->
+    <g transform="translate(44 184)">
+      <rect x="0" y="0" width="4" height="4" fill="#123A5C"/>
+      <circle cx="16" cy="2" r="3" fill="none" stroke="#123A5C" stroke-width="1.2"/>
+      <rect x="27" y="0" width="6" height="4" rx="0.5" fill="none" stroke="#123A5C" stroke-width="1"/>
+    </g>
+  </g>
+
+  <!-- Live preview badge -->
+  <g transform="translate(210 130)">
+    <rect x="-30" y="0" width="60" height="20" rx="10" fill="#4ADE80"/>
+    <circle cx="-18" cy="10" r="3" fill="white"/>
+    <circle cx="-18" cy="10" r="1.5" fill="#4ADE80"/>
+    <text x="4" y="14" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="white" text-anchor="middle">LIVE</text>
+  </g>
+
+  <!-- Title -->
+  <text x="240" y="305" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="#123A5C" text-anchor="middle">Realistic iPhone &amp; Android Preview</text>
+</svg>

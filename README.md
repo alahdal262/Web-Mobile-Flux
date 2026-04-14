@@ -1,8 +1,11 @@
 <p align="center">
-  <img src="fluxbuilder-project/artifacts/fluxbuilder/public/favicon.svg" width="80" height="80" alt="Mobile-WP" />
+  <img src="fluxbuilder-project/artifacts/fluxbuilder/public/favicon.svg" width="120" height="120" alt="Mobile-WP" />
 </p>
 
 <h1 align="center">Mobile-WP</h1>
+<p align="center">
+  <sub>The native WordPress app for iOS &amp; Android &mdash; by <a href="https://infragatesolutions.com/">Infragate Solutions LTD</a></sub>
+</p>
 
 <p align="center">
   <strong>A full-stack SaaS platform that turns any WordPress site into a native mobile app &mdash; without writing a single line of mobile code.</strong>
@@ -32,11 +35,11 @@
 
 ## The Vision
 
-> *"WordPress powers 43% of the web, but turning a WordPress site into a real mobile app still costs $10,000+ and takes months. I built Mobile-WP to change that &mdash; a platform where any website owner can create a professional, native-quality mobile app in minutes, not months."*
+> *"WordPress powers 43% of the web, but turning a WordPress site into a real mobile app still costs $10,000+ and takes months. We built Mobile-WP to change that &mdash; a platform where any website owner can create a professional, native-quality mobile app in minutes, not months."*
 >
-> **&mdash; [Abdel](https://github.com/alahdal262), Creator & Lead Architect**
+> **&mdash; [Infragate Solutions LTD](https://infragatesolutions.com/), Creator & Architect**
 
-I designed, architected, and built this entire platform from scratch &mdash; the visual builder, the backend API, the WordPress plugin, the template system, and the deployment infrastructure. Every component, every API endpoint, every drag-and-drop interaction was conceived and engineered by me to solve a real problem I saw in the market.
+Mobile-WP is designed, architected, and built from the ground up by **Infragate Solutions LTD** &mdash; the visual builder, the backend API, the WordPress plugin, the template system, and the deployment infrastructure. Every component, every API endpoint, every drag-and-drop interaction is engineered by our team to solve a real problem we saw in the market.
 
 ---
 
@@ -59,6 +62,22 @@ Most "WordPress to app" tools either:
 ---
 
 ## Features
+
+<p align="center">
+  <img src="./brand/features/01-visual-builder.svg" width="48%" alt="Visual Drag-and-Drop Builder" />
+  &nbsp;
+  <img src="./brand/features/02-templates.svg" width="48%" alt="25 Business Templates" />
+</p>
+
+<p align="center">
+  <img src="./brand/features/03-wordpress-plugin.svg" width="48%" alt="WordPress Plugin & REST API" />
+  &nbsp;
+  <img src="./brand/features/04-phone-preview.svg" width="48%" alt="Realistic Phone Preview" />
+</p>
+
+<p align="center">
+  <img src="./brand/features/05-build-pipeline.svg" width="70%" alt="Stepped Build Pipeline" />
+</p>
 
 ### Visual Drag-and-Drop Builder
 12 widget types across 5 categories, all configurable with real-time preview:
@@ -367,29 +386,26 @@ All these projects share the same VPS infrastructure (PostgreSQL, Redis, Traefik
 
 ---
 
-## About the Creator
+## About the Company
 
 <table>
   <tr>
-    <td width="120">
-      <img src="https://github.com/alahdal262.png" width="100" style="border-radius: 50%;" alt="Abdel" />
-    </td>
     <td>
-      <strong>Abdel</strong><br/>
-      <em>Founder & Lead Architect</em><br/><br/>
-      <a href="https://salamnoor.com">salamnoor.com</a> &nbsp;|&nbsp;
-      <a href="https://github.com/alahdal262">GitHub</a> &nbsp;|&nbsp;
+      <strong>Infragate Solutions LTD</strong><br/>
+      <em>Creator & Architect of Mobile-WP</em><br/><br/>
+      <a href="https://infragatesolutions.com/">infragatesolutions.com</a> &nbsp;|&nbsp;
+      <a href="https://github.com/alahdal262/Web-Mobile-Flux">GitHub</a> &nbsp;|&nbsp;
       Based in the United Kingdom<br/><br/>
-      Full-stack developer and founder of <strong>Infragate Solutions LTD</strong>. I conceived, designed, and built Mobile-WP from the ground up &mdash; from the initial product vision to the architecture design, from the React builder to the WordPress plugin, from the database schema to the production deployment.<br/><br/>
-      <strong>My philosophy:</strong> think big, ship fast, build things that solve real problems.
+      Infragate Solutions LTD is a software engineering company specialising in cloud-native SaaS platforms, WordPress ecosystems, and mobile application infrastructure. We conceived, designed, and built Mobile-WP from the ground up &mdash; from the initial product vision to the architecture design, from the React builder to the WordPress plugin, from the database schema to the production deployment.<br/><br/>
+      <strong>Our philosophy:</strong> think big, ship fast, build things that solve real problems.
     </td>
   </tr>
 </table>
 
 ### Get in Touch
 
-- **GitHub:** [@alahdal262](https://github.com/alahdal262)
-- **Website:** [salamnoor.com](https://salamnoor.com)
+- **Website:** [infragatesolutions.com](https://infragatesolutions.com/)
+- **GitHub:** [Web-Mobile-Flux](https://github.com/alahdal262/Web-Mobile-Flux)
 - **Issues:** [Report a bug or request a feature](https://github.com/alahdal262/Web-Mobile-Flux/issues)
 - **Discussions:** [Ask a question](https://github.com/alahdal262/Web-Mobile-Flux/discussions)
 
@@ -420,7 +436,7 @@ This project stands on the shoulders of giants:
 ---
 
 <p align="center">
-  <strong>Conceived, designed, and built by <a href="https://github.com/alahdal262">Abdel</a></strong><br/>
+  <strong>Conceived, designed, and built by <a href="https://infragatesolutions.com/">Infragate Solutions LTD</a></strong><br/>
   <sub>16,400+ lines of code &nbsp;|&nbsp; 167 files &nbsp;|&nbsp; 25 templates &nbsp;|&nbsp; 1 vision</sub>
 </p>
 
