@@ -5,15 +5,15 @@
 <h1 align="center">Mobile-WP</h1>
 
 <p align="center">
-  <strong>A full-stack SaaS platform that turns any WordPress site into a native mobile app — without writing a single line of mobile code.</strong>
+  <strong>A full-stack SaaS platform that turns any WordPress site into a native mobile app &mdash; without writing a single line of mobile code.</strong>
 </p>
 
 <p align="center">
-  <a href="https://flutter.streamtvlive.cloud">Live Demo</a> &nbsp;&bull;&nbsp;
-  <a href="#architecture">Architecture</a> &nbsp;&bull;&nbsp;
-  <a href="#features">Features</a> &nbsp;&bull;&nbsp;
-  <a href="#getting-started">Getting Started</a> &nbsp;&bull;&nbsp;
-  <a href="#roadmap">Roadmap</a>
+  <a href="https://flutter.streamtvlive.cloud"><strong>Live Demo</strong></a> &nbsp;&bull;&nbsp;
+  <a href="./docs/ARCHITECTURE.md">Architecture</a> &nbsp;&bull;&nbsp;
+  <a href="./docs/SETUP.md">Setup</a> &nbsp;&bull;&nbsp;
+  <a href="./docs/API.md">API Docs</a> &nbsp;&bull;&nbsp;
+  <a href="./CONTRIBUTING.md">Contribute</a>
 </p>
 
 <p align="center">
@@ -25,17 +25,18 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/WordPress-Plugin-21759B?logo=wordpress&logoColor=white" alt="WordPress" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs welcome" />
 </p>
 
 ---
 
 ## The Vision
 
-> *"WordPress powers 43% of the web, but turning a WordPress site into a real mobile app still costs $10,000+ and takes months. I built Mobile-WP to change that — a platform where any website owner can create a professional, native-quality mobile app in minutes, not months."*
+> *"WordPress powers 43% of the web, but turning a WordPress site into a real mobile app still costs $10,000+ and takes months. I built Mobile-WP to change that &mdash; a platform where any website owner can create a professional, native-quality mobile app in minutes, not months."*
 >
-> **&mdash; Abdel, Creator & Lead Architect**
+> **&mdash; [Abdel](https://github.com/alahdal262), Creator & Lead Architect**
 
-I designed, architected, and built this entire platform from scratch &mdash; the visual builder, the backend API, the WordPress plugin, the template system, and the deployment infrastructure. This isn't a wrapper around someone else's tool. Every component, every API endpoint, every drag-and-drop interaction was conceived and engineered by me to solve a real problem I saw in the market.
+I designed, architected, and built this entire platform from scratch &mdash; the visual builder, the backend API, the WordPress plugin, the template system, and the deployment infrastructure. Every component, every API endpoint, every drag-and-drop interaction was conceived and engineered by me to solve a real problem I saw in the market.
 
 ---
 
@@ -48,10 +49,12 @@ Most "WordPress to app" tools either:
 
 **Mobile-WP takes a different approach:**
 
-1. **JSON-driven architecture** &mdash; The builder outputs a declarative JSON schema, not code. This means the mobile app can update instantly without App Store resubmission (Apple-compliant).
-2. **Real widget rendering** &mdash; Not a WebView. The Flutter runtime interprets the JSON and renders actual native widgets at 60fps.
-3. **WordPress-native** &mdash; A custom plugin that deeply integrates with WordPress and WooCommerce, not just scraping your site's HTML.
-4. **Template-first** &mdash; 25 business-specific templates so users start with a working app, not a blank canvas.
+| Feature | Why It Matters |
+|---------|----------------|
+| **JSON-driven architecture** | The builder outputs declarative JSON, not code. Mobile apps can update instantly without App Store resubmission &mdash; Apple-compliant. |
+| **Real widget rendering** | Not a WebView. The Flutter runtime interprets JSON and renders actual native widgets at 60fps. |
+| **WordPress-native** | Custom plugin that deeply integrates with WordPress and WooCommerce, not just scraping your site's HTML. |
+| **Template-first** | 25 business-specific templates so users start with a working app, not a blank canvas. |
 
 ---
 
@@ -96,23 +99,16 @@ Custom PHP plugin (`mobilewp-connector`) with:
 - HMAC-SHA256 signed webhooks
 - Admin settings page with webhook logs
 
-### Full Auth System
-- Signup, login, logout with session cookies
-- Auth-aware TopBar with user avatar, initials, dropdown menu
-- Protected routes with automatic redirect
-
-### Dark Mode
-Complete dark theme with zinc-950/900/800 palette across every panel.
-
-### Mobile Responsive
-Collapsible sidebar with hamburger menu, hidden right panel on mobile, responsive at all breakpoints.
-
-### Build Pipeline
-Stepped 5-stage progress (Fetch Dependencies &rarr; Compile &rarr; Package &rarr; Sign &rarr; Upload) with build history table and status badges.
+### Complete SaaS Stack
+- Auth system (signup, login, logout, sessions)
+- Auth-aware TopBar with user avatar and dropdown
+- Dark mode across all panels (zinc-950/900/800)
+- Mobile responsive with collapsible sidebar
+- Stepped build pipeline with 5-stage progress
+- Build history with status badges
 
 ---
 
-<a id="architecture"></a>
 ## Architecture
 
 I designed a clean 5-layer architecture that separates concerns and scales independently:
@@ -120,36 +116,37 @@ I designed a clean 5-layer architecture that separates concerns and scales indep
 ```
                     LAYER 1: SaaS Control Plane
             Auth | Projects | Billing | Admin | Audit
-                            |
+                            │
                     LAYER 2: Content Connectors
           WordPress Plugin <-> Sync Service | Webhooks
-                            |
+                            │
                 LAYER 3: App Config & Design Schema
-          Visual Builder | Schema Engine | Templates | Preview
-                            |
+          Visual Builder | Schema Engine | Templates
+                            │
                     LAYER 4: Mobile Runtime
-       Flutter Shell | Widget Factory | Data Layer | Hybrid Nav
-                            |
+       Flutter Shell | Widget Factory | Data Layer
+                            │
                 LAYER 5: Build & Release System
-           Build Queue | Signing | CI/CD | Store Publishing
+           Build Queue | Signing | CI/CD | Publishing
 ```
+
+See **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** for the full technical breakdown.
 
 ### Tech Stack
 
-| Layer | Technology | Why I Chose It |
-|-------|-----------|----------------|
-| **Frontend** | React 19 + Vite 7.3 | Concurrent features, fastest build tool |
-| **Styling** | Tailwind CSS v4 | Utility-first, dark mode, zero runtime |
-| **Components** | 57 shadcn/ui (Radix) | Accessible, composable, unstyled base |
-| **Drag & Drop** | @dnd-kit | Best React DnD library, sortable + droppable |
-| **Routing** | Wouter | 2KB router, perfect for SPA |
-| **State** | TanStack Query | Server state management, cache, refetch |
-| **Animations** | Framer Motion | Declarative, performant, gesture support |
-| **Backend** | Express 5 | Mature, minimal, TypeScript-compatible |
-| **Database** | PostgreSQL + Drizzle ORM | JSONB for schemas, type-safe queries |
-| **Auth** | crypto.scrypt + cookies | No vendor lock-in, full control |
-| **Monorepo** | pnpm workspaces | Fast, disk-efficient, native workspaces |
-| **WordPress** | Custom PHP plugin | Full control over API surface |
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19 + Vite 7.3 + TypeScript |
+| **Styling** | Tailwind CSS v4 + shadcn/ui (57 components) |
+| **Drag & Drop** | @dnd-kit/core + @dnd-kit/sortable |
+| **Routing** | Wouter (2KB router) |
+| **State** | TanStack Query |
+| **Animations** | Framer Motion |
+| **Backend** | Express 5 + TypeScript |
+| **Database** | PostgreSQL 16 + Drizzle ORM |
+| **Auth** | crypto.scrypt + HttpOnly cookies |
+| **Monorepo** | pnpm workspaces |
+| **WordPress** | Custom PHP 8.1+ plugin |
 
 ---
 
@@ -157,44 +154,46 @@ I designed a clean 5-layer architecture that separates concerns and scales indep
 
 ```
 Mobile-WP/
-├── fluxbuilder-project/              # Main SaaS application
+├── README.md                          # You are here
+├── CONTRIBUTING.md                    # How to contribute
+├── LICENSE                            # MIT License
+├── docs/                              # Full documentation
+│   ├── ARCHITECTURE.md                #   System design
+│   ├── SETUP.md                       #   Local dev setup
+│   ├── DATABASE.md                    #   DB schema + migrations
+│   ├── DEPLOYMENT.md                  #   Production deployment
+│   └── API.md                         #   Complete API reference
+│
+├── fluxbuilder-project/               # Main SaaS application (monorepo)
+│   ├── .env.example                   #   Environment template
 │   ├── artifacts/
-│   │   ├── fluxbuilder/              # React frontend (13,800+ lines)
-│   │   │   └── src/
-│   │   │       ├── pages/Dashboard/  # 21 modular components
-│   │   │       │   ├── WidgetBuilder.tsx    # Drag-and-drop builder (1,718 lines)
-│   │   │       │   ├── data/templates.ts    # 25 template configs
-│   │   │       │   ├── components/          # 8 UI components
-│   │   │       │   └── DesignPanel/         # 5 design editors
-│   │   │       ├── pages/Home.tsx           # Landing page
-│   │   │       └── components/ui/           # 57 shadcn components
-│   │   └── api-server/               # Express backend (350 lines)
-│   │       └── src/routes/            # Auth + Apps + Health
-│   └── lib/                          # Shared packages
-│       ├── db/                        # PostgreSQL schema
-│       ├── api-zod/                   # API validation
-│       └── api-client-react/          # Generated client
+│   │   ├── fluxbuilder/               #   React frontend (13,800+ lines)
+│   │   │   └── src/pages/Dashboard/   #     21 modular components
+│   │   │       ├── WidgetBuilder.tsx  #     Drag-and-drop builder (1,718 lines)
+│   │   │       ├── data/templates.ts  #     25 template configs
+│   │   │       └── components/        #     Phone preview, sidebar, etc.
+│   │   └── api-server/                #   Express backend
+│   └── lib/                           #   Shared packages (db, types)
 │
 └── wp-plugin/
-    └── mobilewp-connector/           # WordPress plugin (2,200 lines)
-        ├── includes/                  # 6 PHP classes
-        ├── admin/                     # Settings UI
-        └── assets/                    # JS + CSS
+    └── mobilewp-connector/            # WordPress plugin (2,200 lines)
+        ├── includes/                  #   6 PHP classes
+        ├── admin/                     #   Settings UI
+        └── assets/                    #   JS + CSS
 ```
 
 **Total: ~16,400 lines of hand-crafted code across 167 files.**
 
 ---
 
-<a id="getting-started"></a>
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 - Node.js 20+
 - pnpm 10+
-- PostgreSQL 14+ (for backend)
+- PostgreSQL 14+ (for backend, optional for frontend-only dev)
 
-### Quick Start
+### Install & Run
 
 ```bash
 # Clone
@@ -204,76 +203,93 @@ cd Web-Mobile-Flux/fluxbuilder-project
 # Install
 pnpm install
 
-# Run frontend
+# Copy environment template
+cp .env.example .env
+# Edit .env with your database credentials
+
+# Push database schema
+pnpm --filter @workspace/db run db:push
+
+# Run frontend (Terminal 1)
 PORT=5173 BASE_PATH=/ API_PORT=3001 pnpm --filter @workspace/fluxbuilder run dev
 
-# Run backend (separate terminal)
-DATABASE_URL=postgresql://user:pass@localhost:5432/mobilewp pnpm --filter @workspace/api-server run dev
+# Run backend (Terminal 2)
+pnpm --filter @workspace/api-server run dev
 ```
 
-Open `http://localhost:5173` in your browser.
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Production Build
-
-```bash
-PORT=3090 API_PORT=3001 BASE_PATH=/ pnpm --filter @workspace/fluxbuilder run build
-```
+**Need more detail?** See **[docs/SETUP.md](./docs/SETUP.md)** for the complete setup guide.
 
 ---
 
-## WordPress Plugin Setup
+## Production Deployment
+
+The live instance runs on a Hostinger VPS:
+
+```
+Internet -> Cloudflare -> Traefik (TLS) -> nginx (:3090) -> Express (:3001) -> PostgreSQL
+```
 
 ```bash
-# From the repo root
+ssh root@your-vps
+cd /projects/fluxbuilder/fluxbuilder-project
+pnpm install --frozen-lockfile
+PORT=3090 API_PORT=3001 BASE_PATH=/ pnpm --filter @workspace/fluxbuilder run build
+pm2 reload fluxbuilder-api
+```
+
+See **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** for the full production deployment guide.
+
+---
+
+## WordPress Plugin
+
+### Installation
+
+```bash
 cd wp-plugin
 zip -r mobilewp-connector.zip mobilewp-connector/
 ```
 
 1. Upload `mobilewp-connector.zip` via WP Admin > Plugins > Add New > Upload
 2. Activate the plugin
-3. Go to **MobileWP** in the sidebar
+3. Navigate to **MobileWP** in the sidebar
 4. Generate API keys
-5. Set webhook URL
-6. Test: `curl https://yoursite.com/wp-json/mobilewp/v1/status`
+5. Set the webhook URL to your Mobile-WP instance
 
-### Plugin API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/mobilewp/v1/status` | GET | Health check (no auth) |
-| `/mobilewp/v1/posts` | GET | Paginated posts |
-| `/mobilewp/v1/categories` | GET | Category tree |
-| `/mobilewp/v1/menus` | GET | Nav menus with items |
-| `/mobilewp/v1/products` | GET | WooCommerce products |
-| `/mobilewp/v1/search` | POST | Full-text search |
-
-[See full API reference in the source](wp-plugin/mobilewp-connector/readme.txt)
-
----
-
-## Deployment
-
-The live instance runs on a Hostinger VPS:
-
-```
-Internet -> Traefik (TLS) -> nginx (:3090) -> Express (:3001) -> PostgreSQL
-```
+### Test the Plugin
 
 ```bash
-ssh root@your-vps
-cd /projects/fluxbuilder
-pnpm install
-PORT=3090 API_PORT=3001 BASE_PATH=/ pnpm --filter @workspace/fluxbuilder run build
-pm2 restart fluxbuilder-api
+# Status check (no auth required)
+curl https://yoursite.com/wp-json/mobilewp/v1/status
+
+# Get posts (requires API key)
+curl -H "X-MobileWP-Platform-Key: YOUR_KEY" \
+  https://yoursite.com/wp-json/mobilewp/v1/posts
 ```
+
+See **[docs/API.md](./docs/API.md)** for the complete plugin API reference.
 
 ---
 
-<a id="roadmap"></a>
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** | System design, 5-layer architecture, technology decisions |
+| **[SETUP.md](./docs/SETUP.md)** | Local development setup with troubleshooting |
+| **[DATABASE.md](./docs/DATABASE.md)** | Schema, migrations, connection strings, backup/restore |
+| **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** | Production deployment on a VPS with Traefik + nginx + PM2 |
+| **[API.md](./docs/API.md)** | Complete REST API reference with curl examples |
+| **[CONTRIBUTING.md](./CONTRIBUTING.md)** | How to contribute your first PR |
+
+---
+
 ## Roadmap
 
 ### Phase 1 &mdash; MVP (Complete)
-- [x] Visual drag-and-drop builder (12 widgets)
+- [x] Visual drag-and-drop builder with 12 widgets
 - [x] 25 business templates with one-click apply
 - [x] WordPress plugin (REST API + webhooks + WooCommerce)
 - [x] Auth system (signup/login/sessions)
@@ -281,14 +297,15 @@ pm2 restart fluxbuilder-api
 - [x] Dark mode across all panels
 - [x] Mobile responsive dashboard
 - [x] Build pipeline UI
-- [x] Live deployment at flutter.streamtvlive.cloud
+- [x] Live deployment at [flutter.streamtvlive.cloud](https://flutter.streamtvlive.cloud)
+- [x] Full documentation suite
 
 ### Phase 2 &mdash; Mobile Runtime
 - [ ] Flutter runtime consuming JSON config
 - [ ] Cloud builds via Codemagic
 - [ ] Config publishing to CDN
-- [ ] WooCommerce checkout (WebView)
-- [ ] Stripe billing integration
+- [ ] WooCommerce checkout integration
+- [ ] Stripe billing
 - [ ] Analytics dashboard
 
 ### Phase 3 &mdash; Scale
@@ -297,27 +314,56 @@ pm2 restart fluxbuilder-api
 - [ ] Custom connectors (Shopify, Webflow)
 - [ ] Multi-language support
 - [ ] Enterprise SSO
+- [ ] MPAOP Platform integration
 
 ---
 
-## Developer Guide
+## Contributing
 
-### Adding a Widget Type
-1. Add to `WidgetType` union in `WidgetBuilder.tsx`
-2. Add default config in `DEFAULT_CONFIGS`
-3. Add to `WIDGET_CATALOG`
-4. Create preview renderer + property panel
-5. Register in the widget factory
+**Contributions are welcome and appreciated!** Mobile-WP is built to grow with community input.
 
-### Adding a Template
-1. Add config to `data/templates.ts`
-2. Add entry to `ALL_TEMPLATES` in `TemplatesPanel.tsx`
-3. Each template must use different widget combinations
+### How to Contribute
 
-### Adding a WordPress Endpoint
-1. Register route in `class-mobilewp-api.php`
-2. Create handler with `MobileWP_Sync` formatters
-3. Add `permission_callback` for auth
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Commit with [Conventional Commits](https://www.conventionalcommits.org/): `git commit -m "feat: add carousel widget"`
+4. Push and open a PR
+
+### Good First Issues
+
+Look for issues labeled [`good first issue`](https://github.com/alahdal262/Web-Mobile-Flux/labels/good%20first%20issue) &mdash; these are specifically selected for new contributors.
+
+### Areas We Need Help With
+
+| Area | Skills Needed |
+|------|--------------|
+| **Flutter Runtime** | Dart, Flutter, state management |
+| **New Widget Types** | React, TypeScript, CSS |
+| **Template Designs** | UI/UX, Tailwind CSS |
+| **WordPress Plugin** | PHP, WordPress API |
+| **WooCommerce** | PHP, WooCommerce internals |
+| **Documentation** | Technical writing |
+| **Tests** | Jest, React Testing Library |
+| **Accessibility** | WCAG, ARIA, screen readers |
+| **Internationalization** | i18n, translations |
+
+See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for the full contribution guide.
+
+---
+
+## Related Projects
+
+Mobile-WP is part of a larger ecosystem of open-source SaaS infrastructure I'm building:
+
+| Project | Description |
+|---------|-------------|
+| **[Mobile-WP](https://github.com/alahdal262/Web-Mobile-Flux)** | Visual mobile app builder (this project) |
+| **MPAOP Platform** | Multi-project AI orchestration layer with Claude Code + MCP |
+| **yemen-tv-app** | Flutter mobile app for Yemen TV news network |
+| **yemen-tv-ai-assistant** | AI editorial assistant WordPress plugin |
+| **yementv-native-suite** | WordPress plugin suite for Yemen TV |
+
+All these projects share the same VPS infrastructure (PostgreSQL, Redis, Traefik) and demonstrate different facets of the same architectural philosophy: **config-driven, multi-tenant, cloud-native SaaS.**
 
 ---
 
@@ -330,13 +376,22 @@ pm2 restart fluxbuilder-api
     </td>
     <td>
       <strong>Abdel</strong><br/>
-      Founder & Lead Architect<br/>
-      <a href="https://salamnoor.com">salamnoor.com</a> &nbsp;|&nbsp; <a href="https://github.com/alahdal262">GitHub</a><br/><br/>
-      Full-stack developer and entrepreneur based in the United Kingdom. Founder of <strong>Noor Web LTD</strong>. I conceived, designed, and built Mobile-WP from the ground up &mdash; from the initial product vision to the architecture design, from the React builder to the WordPress plugin, from the database schema to the production deployment.<br/><br/>
-      This project represents my approach to software engineering: <strong>think big, ship fast, build things that solve real problems.</strong>
+      <em>Founder & Lead Architect</em><br/><br/>
+      <a href="https://salamnoor.com">salamnoor.com</a> &nbsp;|&nbsp;
+      <a href="https://github.com/alahdal262">GitHub</a> &nbsp;|&nbsp;
+      Based in the United Kingdom<br/><br/>
+      Full-stack developer and founder of <strong>Noor Web LTD</strong>. I conceived, designed, and built Mobile-WP from the ground up &mdash; from the initial product vision to the architecture design, from the React builder to the WordPress plugin, from the database schema to the production deployment.<br/><br/>
+      <strong>My philosophy:</strong> think big, ship fast, build things that solve real problems.
     </td>
   </tr>
 </table>
+
+### Get in Touch
+
+- **GitHub:** [@alahdal262](https://github.com/alahdal262)
+- **Website:** [salamnoor.com](https://salamnoor.com)
+- **Issues:** [Report a bug or request a feature](https://github.com/alahdal262/Web-Mobile-Flux/issues)
+- **Discussions:** [Ask a question](https://github.com/alahdal262/Web-Mobile-Flux/discussions)
 
 ---
 
@@ -344,9 +399,31 @@ pm2 restart fluxbuilder-api
 
 MIT License &mdash; see [LICENSE](LICENSE) for details.
 
+You are free to use, modify, and distribute this software for any purpose, including commercial use. Attribution to the original author is appreciated but not required.
+
+---
+
+## Acknowledgments
+
+This project stands on the shoulders of giants:
+- [React](https://react.dev) &mdash; UI framework
+- [Vite](https://vitejs.dev) &mdash; Build tool
+- [Tailwind CSS](https://tailwindcss.com) &mdash; Styling
+- [shadcn/ui](https://ui.shadcn.com) &mdash; Component library
+- [Lucide](https://lucide.dev) &mdash; Icons
+- [@dnd-kit](https://dndkit.com) &mdash; Drag and drop
+- [Drizzle ORM](https://orm.drizzle.team) &mdash; Database ORM
+- [Express](https://expressjs.com) &mdash; Backend framework
+- [PostgreSQL](https://postgresql.org) &mdash; Database
+- [WordPress](https://wordpress.org) &mdash; CMS integration target
+
 ---
 
 <p align="center">
   <strong>Conceived, designed, and built by <a href="https://github.com/alahdal262">Abdel</a></strong><br/>
   <sub>16,400+ lines of code &nbsp;|&nbsp; 167 files &nbsp;|&nbsp; 25 templates &nbsp;|&nbsp; 1 vision</sub>
+</p>
+
+<p align="center">
+  <sub>If this project helps you, consider giving it a &#11088; on GitHub</sub>
 </p>

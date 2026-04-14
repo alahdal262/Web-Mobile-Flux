@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/alahdal262/Web-Mobile-Flux/discussions
+    about: Ask a question or start a discussion about Mobile-WP
+  - name: Live Demo
+    url: https://flutter.streamtvlive.cloud
+    about: Try Mobile-WP in your browser
+  - name: Creator's Website
+    url: https://salamnoor.com
+    about: Learn more about the creator and other projects
