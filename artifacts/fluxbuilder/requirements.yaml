@@ -1,0 +1,25 @@
+packages:
+  "framer-motion": "For premium page transitions and scroll-triggered animations"
+  "clsx": "For conditional class name merging"
+  "tailwind-merge": "For safely merging Tailwind classes"
+
+images:
+  - path: "artifacts/fluxbuilder/public/images/hero-mockup.png"
+    description: "A 3D isometric mockup of a modern sleek mobile app interface floating with glassmorphism elements, vibrant purple and pink gradients on a dark transparent background"
+    aspect_ratio: "4:3"
+  - path: "artifacts/fluxbuilder/public/images/builder-showcase.png"
+    description: "A sleek, dark-mode software interface showing a drag-and-drop mobile app builder, with panels, purple accent colors, and a central mobile preview canvas"
+    aspect_ratio: "16:9"
+  - path: "artifacts/fluxbuilder/public/images/avatar-1.png"
+    description: "Professional headshot of a smiling woman in her 30s, neutral background, bright lighting"
+    aspect_ratio: "1:1"
+  - path: "artifacts/fluxbuilder/public/images/avatar-2.png"
+    description: "Professional headshot of a creative man with glasses, neutral background"
+    aspect_ratio: "1:1"
+  - path: "artifacts/fluxbuilder/public/images/avatar-3.png"
+    description: "Professional headshot of an executive woman, confident, warm background"
+    aspect_ratio: "1:1"
+
+notes:
+  - "Pure frontend marketing site, fully functional UI with dummy auth/docs to demonstrate completeness."
+  - "Wouter is used for routing."

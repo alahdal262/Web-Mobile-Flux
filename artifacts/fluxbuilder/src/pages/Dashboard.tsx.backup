@@ -1,0 +1,3292 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
+import {
+  LayoutDashboard, Paintbrush, Grid, SquareStack, Rows3,
+  PanelLeft, LayoutTemplate, Puzzle, Hammer, MessageSquare,
+  Link2, ShieldCheck, ChevronRight, ChevronDown, Search,
+  Save, Upload, HelpCircle, Bell, User, MoreVertical,
+  Home, FolderOpen, Radio, Heart, Star, Globe, Type,
+  Monitor, Zap, Plus, Trash2, RotateCcw, SquareDashed,
+  RefreshCw, ZoomIn, Settings, ChevronLeft, AlignLeft,
+  ArrowLeft, Layers, Palette, Bold, Italic, AlignCenter,
+  AlignRight, Image, Smartphone, Check, X, GripVertical,
+  Eye, EyeOff, ChevronUp, Circle, Square, Triangle,
+  MoreHorizontal, Copy, Move, Sliders, Layout, Menu,
+  Sun, Moon
+} from "lucide-react";
+
+type TabKey = "HOME" | "Category" | "Live" | "Wishlist" | "User";
+type DesignLayout =
+  | "Home" | "Category" | "Search" | "Page"
+  | "Wishlist" | "Profile" | "Static" | "Html"
+  | "Post Screen" | "Dynamic" | "Tab Menu" | "Scrollable";
+type SidebarSection = "Dashboard" | "Design" | "Features" | "Build" | "Chat" | "Dynamic Links" | "Product License";
+type DesignSubItem = "Layouts" | "Templates" | "AppBar" | "TabBar" | "Side Menu" | null;
+
+// ---------- helpers ----------
+const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
+  <button
+    onClick={onChange}
+    className={`w-10 h-5 rounded-full transition-colors relative flex items-center flex-shrink-0 ${value ? "bg-blue-500" : "bg-gray-200"}`}
+  >
+    <span className={`w-4 h-4 bg-white rounded-full shadow absolute transition-all ${value ? "left-[22px]" : "left-0.5"}`} />
+  </button>
+);
+
+// ---------- constants ----------
+const DESIGN_LAYOUTS: DesignLayout[] = [
+  "Home","Category","Search","Page",
+  "Wishlist","Profile","Static","Html",
+  "Post Screen","Dynamic","Tab Menu","Scrollable",
+];
+const LAYOUT_ICONS: Record<DesignLayout, React.ReactNode> = {
+  "Home":<Home className="w-4 h-4"/>,"Category":<Grid className="w-4 h-4"/>,"Search":<Search className="w-4 h-4"/>,"Page":<Globe className="w-4 h-4"/>,
+  "Wishlist":<Heart className="w-4 h-4"/>,"Profile":<User className="w-4 h-4"/>,"Static":<SquareDashed className="w-4 h-4"/>,"Html":<Type className="w-4 h-4"/>,
+  "Post Screen":<Layers className="w-4 h-4"/>,"Dynamic":<RefreshCw className="w-4 h-4"/>,"Tab Menu":<Rows3 className="w-4 h-4"/>,"Scrollable":<AlignLeft className="w-4 h-4"/>,
+};
+const APP_TABS: { key: TabKey; icon: React.ReactNode; label: string }[] = [
+  { key:"HOME",  icon:<Home className="w-5 h-5"/>,     label:"HOME" },
+  { key:"Category", icon:<FolderOpen className="w-5 h-5"/>, label:"Category" },
+  { key:"Live",  icon:<Radio className="w-5 h-5"/>,    label:"Live" },
+  { key:"Wishlist", icon:<Heart className="w-5 h-5"/>, label:"Wishlist" },
+  { key:"User",  icon:<User className="w-5 h-5"/>,     label:"User" },
+];
+
+// ---------- dynamic tab types ----------
+type DynamicTab = {
+  id: string;
+  label: string;
+  iconKey: string;
+  visible: boolean;
+  isDefault?: boolean;
+  isStar?: boolean;
+};
+
+const ICON_OPTIONS: { key: string; icon: React.ReactNode; label: string }[] = [
+  { key:"home",      icon:<Home className="w-5 h-5"/>,        label:"Home" },
+  { key:"category",  icon:<Grid className="w-5 h-5"/>,        label:"Category" },
+  { key:"live",      icon:<Radio className="w-5 h-5"/>,       label:"Live" },
+  { key:"wishlist",  icon:<Heart className="w-5 h-5"/>,       label:"Wishlist" },
+  { key:"user",      icon:<User className="w-5 h-5"/>,        label:"User" },
+  { key:"search",    icon:<Search className="w-5 h-5"/>,      label:"Search" },
+  { key:"bell",      icon:<Bell className="w-5 h-5"/>,        label:"Notifications" },
+  { key:"settings",  icon:<Settings className="w-5 h-5"/>,    label:"Settings" },
+  { key:"star",      icon:<Star className="w-5 h-5"/>,        label:"Starred" },
+  { key:"globe",     icon:<Globe className="w-5 h-5"/>,       label:"Web" },
+  { key:"folder",    icon:<FolderOpen className="w-5 h-5"/>,  label:"Folder" },
+  { key:"layers",    icon:<Layers className="w-5 h-5"/>,      label:"Layers" },
+  { key:"bookmark",  icon:<SquareDashed className="w-5 h-5"/>,label:"Bookmark" },
+  { key:"list",      icon:<AlignLeft className="w-5 h-5"/>,   label:"List" },
+  { key:"zap",       icon:<Zap className="w-5 h-5"/>,         label:"Lightning" },
+  { key:"type",      icon:<Type className="w-5 h-5"/>,        label:"Text" },
+];
+
+const ICON_MAP: Record<string, React.ReactNode> = Object.fromEntries(
+  ICON_OPTIONS.map(o => [o.key, o.icon])
+);
+
+const PHONE_ICON_MAP: Record<string, React.ReactNode> = {
+  home:     <Home className="w-[18px] h-[18px]"/>,
+  category: <Grid className="w-[18px] h-[18px]"/>,
+  live:     <Radio className="w-[18px] h-[18px]"/>,
+  wishlist: <Heart className="w-[18px] h-[18px]"/>,
+  user:     <User className="w-[18px] h-[18px]"/>,
+  search:   <Search className="w-[18px] h-[18px]"/>,
+  bell:     <Bell className="w-[18px] h-[18px]"/>,
+  settings: <Settings className="w-[18px] h-[18px]"/>,
+  star:     <Star className="w-[18px] h-[18px]"/>,
+  globe:    <Globe className="w-[18px] h-[18px]"/>,
+  folder:   <FolderOpen className="w-[18px] h-[18px]"/>,
+  layers:   <Layers className="w-[18px] h-[18px]"/>,
+  bookmark: <SquareDashed className="w-[18px] h-[18px]"/>,
+  list:     <AlignLeft className="w-[18px] h-[18px]"/>,
+  zap:      <Zap className="w-[18px] h-[18px]"/>,
+  type:     <Type className="w-[18px] h-[18px]"/>,
+};
+
+const DEFAULT_DYNAMIC_TABS: DynamicTab[] = [
+  { id:"t1", label:"HOME",     iconKey:"home",     visible:true,  isDefault:true, isStar:true },
+  { id:"t2", label:"Category", iconKey:"category", visible:true,  isDefault:true },
+  { id:"t3", label:"Live",     iconKey:"live",     visible:true,  isDefault:true },
+  { id:"t4", label:"Wishlist", iconKey:"wishlist",  visible:true,  isDefault:true },
+  { id:"t5", label:"User",     iconKey:"user",     visible:true,  isDefault:true },
+];
+
+// =====================================================================
+// ADD TAB MODAL
+// =====================================================================
+function AddTabModal({ onClose, onAdd }: {
+  onClose: () => void;
+  onAdd: (tab: DynamicTab) => void;
+}) {
+  const [name, setName]         = useState("");
+  const [iconKey, setIconKey]   = useState("home");
+  const inputRef                = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const handleAdd = () => {
+    if (!name.trim()) return;
+    onAdd({
+      id: `t${Date.now()}`,
+      label: name.trim(),
+      iconKey,
+      visible: true,
+    });
+    onClose();
+  };
+
+  return (
+    /* backdrop */
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-80 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+          <p className="text-sm font-bold text-gray-900">Add New Tab</p>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+            <X className="w-4 h-4"/>
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          {/* Tab name */}
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Tab Name</label>
+            <input
+              ref={inputRef}
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleAdd()}
+              placeholder="e.g. Favorites"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
+            />
+          </div>
+
+          {/* Icon picker */}
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Icon</label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {ICON_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => setIconKey(opt.key)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                    iconKey === opt.key
+                      ? "border-violet-500 bg-violet-50 text-violet-600"
+                      : "border-gray-100 text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                  }`}
+                >
+                  <span className="[&_svg]:w-4 [&_svg]:h-4">{opt.icon}</span>
+                  <span className="text-[8px] leading-none text-center">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+              <span className="text-gray-600 [&_svg]:w-5 [&_svg]:h-5">{ICON_MAP[iconKey]}</span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-900">{name || "Tab Name"}</p>
+              <p className="text-[10px] text-gray-400">New bottom tab</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-2 px-5 pb-5">
+          <button onClick={onClose}
+            className="flex-1 py-2 text-sm font-medium border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={handleAdd}
+            disabled={!name.trim()}
+            className="flex-1 py-2 text-sm font-semibold bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            Add Tab
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// PAGE CARDS PANEL  (side of phone)
+// =====================================================================
+function PageCardsPanel({ tabs, activeTabId, onSelect, onToggleVisible, onAdd, onDelete }: {
+  tabs: DynamicTab[];
+  activeTabId: string;
+  onSelect: (id: string) => void;
+  onToggleVisible: (id: string) => void;
+  onAdd: (tab: DynamicTab) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <div className="flex flex-col items-center gap-2 py-4 px-2 overflow-y-auto"
+        style={{ maxHeight: "100%" }}>
+        {tabs.map(tab => (
+          <div key={tab.id} className="relative group flex-shrink-0">
+            {/* Card */}
+            <button
+              onClick={() => onSelect(tab.id)}
+              className={`w-[72px] h-[72px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all shadow-sm ${
+                activeTabId === tab.id
+                  ? "border-gray-300 bg-white shadow-md"
+                  : !tab.visible
+                  ? "border-gray-100 bg-gray-50/80 opacity-60"
+                  : "border-gray-100 bg-white hover:border-gray-300 hover:shadow-md"
+              }`}
+            >
+              <span className={`[&_svg]:w-[22px] [&_svg]:h-[22px] ${tab.visible ? "text-gray-600" : "text-gray-400"}`}>
+                {ICON_MAP[tab.iconKey] ?? <Heart className="w-[22px] h-[22px]"/>}
+              </span>
+              <span className={`text-[9px] font-medium leading-tight text-center px-1 truncate w-full text-center ${tab.visible ? "text-gray-600" : "text-gray-400"}`}>
+                {tab.label}
+              </span>
+            </button>
+
+            {/* Star badge */}
+            {tab.isStar && (
+              <div className="absolute -top-1 -right-1 pointer-events-none">
+                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400"/>
+              </div>
+            )}
+
+            {/* Eye toggle — top-right, shown on hover or when hidden */}
+            {!tab.isStar && (
+              <button
+                onClick={e => { e.stopPropagation(); onToggleVisible(tab.id); }}
+                className={`absolute top-1 right-1 rounded-full p-0.5 transition-all ${
+                  !tab.visible
+                    ? "opacity-100 text-gray-400"
+                    : "opacity-0 group-hover:opacity-100 text-gray-300 hover:text-gray-500"
+                }`}
+              >
+                {tab.visible
+                  ? <Eye className="w-3 h-3"/>
+                  : <EyeOff className="w-3 h-3"/>}
+              </button>
+            )}
+
+            {/* Delete — shown on hover, only for non-default tabs */}
+            {!tab.isDefault && (
+              <button
+                onClick={e => { e.stopPropagation(); onDelete(tab.id); }}
+                className="absolute -top-1 -left-1 w-4 h-4 bg-red-500 text-white rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-all hidden group-hover:flex"
+              >
+                <X className="w-2.5 h-2.5"/>
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Add button */}
+        <button
+          onClick={() => setShowModal(true)}
+          className="w-[72px] h-[72px] rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-300 hover:border-violet-400 hover:text-violet-400 hover:bg-violet-50 transition-all flex-shrink-0 shadow-sm"
+        >
+          <Plus className="w-6 h-6"/>
+        </button>
+      </div>
+
+      {showModal && (
+        <AddTabModal
+          onClose={() => setShowModal(false)}
+          onAdd={onAdd}
+        />
+      )}
+    </>
+  );
+}
+
+// =====================================================================
+// PHONE PREVIEW
+// =====================================================================
+
+/** Shared status-bar used inside the phone frame */
+function PhoneStatusBar({ time = "01:48", light = false }: { time?: string; light?: boolean }) {
+  const c = light ? "text-white" : "text-gray-900";
+  return (
+    <div className={`flex items-center justify-between px-5 pt-2.5 pb-0.5 ${light ? "" : "bg-white"}`}>
+      <span className={`text-[11px] font-bold ${c}`}>{time}</span>
+      {/* Dynamic Island placeholder — just dots for signal */}
+      <div className="flex items-center gap-[3px]">
+        {/* signal dots */}
+        {[1,2,3,4].map(i => (
+          <div key={i} className={`rounded-sm ${light?"bg-white":"bg-gray-800"}`}
+            style={{width:3,height:3+i*1.5,opacity: i<=3?0.5+i*0.15:1}}/>
+        ))}
+        {/* wifi */}
+        <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ml-0.5 ${light?"fill-white":"fill-gray-800"}`}>
+          <path d="M1.5 8.5a15 15 0 0121 0M5 12a11 11 0 0114 0M8.5 15.5a7 7 0 017 0M12 19h.01" stroke={light?"white":"#1f2937"} strokeWidth="2" strokeLinecap="round" fill="none"/>
+        </svg>
+        {/* battery */}
+        <div className={`relative flex items-center ml-0.5`} style={{width:20,height:11}}>
+          <div className={`w-[17px] h-full border rounded-[3px] ${light?"border-white":"border-gray-800"}`}/>
+          <div className={`absolute left-0.5 top-0.5 bottom-0.5 rounded-[2px] ${light?"bg-white":"bg-gray-800"}`} style={{width:12}}/>
+          <div className={`absolute -right-[2px] top-1/2 -translate-y-1/2 rounded-r-[2px] ${light?"bg-white":"bg-gray-800"}`} style={{width:2,height:5}}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The bottom tab bar rendered inside the phone */
+function PhoneTabBar({ activeTabId, dynTabs, onDynSelect }: {
+  activeTabId: string;
+  dynTabs: DynamicTab[];
+  onDynSelect: (id: string) => void;
+}) {
+  const visibleTabs = dynTabs.filter(t => t.visible);
+  return (
+    <div className="bg-white border-t border-gray-200 flex items-center justify-around px-1 py-1.5">
+      {visibleTabs.map(tab=>(
+        <button key={tab.id} onClick={()=>onDynSelect(tab.id)}
+          className="flex flex-col items-center gap-0.5 min-w-0">
+          <span className={tab.id===activeTabId?"text-blue-600":"text-gray-400"}>
+            {PHONE_ICON_MAP[tab.iconKey] ?? <Home className="w-[18px] h-[18px]"/>}
+          </span>
+          <span className={`text-[8px] font-medium truncate max-w-[48px] ${tab.id===activeTabId?"text-blue-600":"text-gray-400"}`}>{tab.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PhonePreview({ activeTab, onTabChange, dynTabs, activeTabId, onDynSelect }: {
+  activeTab: TabKey;
+  onTabChange:(t:TabKey)=>void;
+  dynTabs: DynamicTab[];
+  activeTabId: string;
+  onDynSelect: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full py-4">
+      {/* Outer shell — black bezel */}
+      <div className="relative bg-[#1a1a1a] rounded-[44px] shadow-2xl"
+        style={{width:272, padding:"10px 8px 10px 8px", boxShadow:"0 0 0 1px #3a3a3a, 0 30px 80px rgba(0,0,0,0.5)"}}>
+
+        {/* Side buttons */}
+        <div className="absolute -left-[3px] top-20 w-[3px] h-8 bg-[#2a2a2a] rounded-l-sm"/>
+        <div className="absolute -left-[3px] top-32 w-[3px] h-10 bg-[#2a2a2a] rounded-l-sm"/>
+        <div className="absolute -left-[3px] top-[180px] w-[3px] h-10 bg-[#2a2a2a] rounded-l-sm"/>
+        <div className="absolute -right-[3px] top-28 w-[3px] h-14 bg-[#2a2a2a] rounded-r-sm"/>
+
+        {/* Screen */}
+        <div className="bg-white rounded-[36px] overflow-hidden relative" style={{height:540}}>
+          {/* Dynamic Island */}
+          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-20 bg-black rounded-full"
+            style={{width:88,height:26}}/>
+
+          {/* Status bar — sits below the island */}
+          <div className="absolute top-0 left-0 right-0 z-10">
+            <PhoneStatusBar time="01:48"/>
+          </div>
+
+          {/* Scrollable content area */}
+          <div className="absolute left-0 right-0 bottom-0 overflow-hidden flex flex-col"
+            style={{top:38}}>
+            <div className="flex-1 overflow-hidden">
+              {activeTab==="HOME"     && <HomeTabContent/>}
+              {activeTab==="Category" && <CategoryTabContent/>}
+              {activeTab==="Live"     && <LiveTabContent/>}
+              {activeTab==="Wishlist" && <WishlistTabContent/>}
+              {activeTab==="User"     && <UserTabContent/>}
+            </div>
+            <PhoneTabBar activeTabId={activeTabId} dynTabs={dynTabs} onDynSelect={onDynSelect}/>
+            {/* Home indicator */}
+            <div className="flex items-center justify-center py-1 bg-white">
+              <div className="w-20 h-1 rounded-full bg-gray-300"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomeTabContent() {
+  return (
+    <div className="bg-gray-50 h-full overflow-y-auto overflow-x-hidden">
+      {/* App header */}
+      <div className="flex items-center gap-2 px-3 pt-2 pb-2 bg-white border-b border-gray-100">
+        <Menu className="w-4 h-4 text-gray-600 flex-shrink-0"/>
+        {/* Logo circle */}
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center flex-shrink-0">
+          <Radio className="w-3.5 h-3.5 text-white"/>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-gray-900 leading-none">Yemen TV</p>
+          <p className="text-[8px] text-gray-400 leading-none mt-0.5">Live News</p>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-0.5 bg-red-600 text-white rounded-full px-1.5 py-0.5">
+            <span className="text-[7px]">📢</span>
+            <span className="text-[7px] font-bold">Breaking</span>
+          </div>
+          <Bell className="w-3.5 h-3.5 text-gray-500"/>
+        </div>
+      </div>
+
+      {/* Category pills */}
+      <div className="flex gap-1.5 px-3 py-2 overflow-hidden">
+        {["Latest","Arabic","Houthi","INTL"].map((c,i)=>(
+          <div key={c} className={`px-2 py-0.5 rounded-full text-[8px] font-semibold whitespace-nowrap flex-shrink-0 ${i===0?"bg-red-600 text-white":"border border-gray-300 text-gray-600"}`}>{c}</div>
+        ))}
+      </div>
+
+      {/* Breaking News section */}
+      <div className="px-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1">
+            <span className="text-[10px]">🔥</span>
+            <span className="text-[10px] font-bold text-gray-900">Breaking News</span>
+          </div>
+          <div className="flex items-center gap-1 border border-gray-200 rounded-full px-2 py-0.5">
+            <Search className="w-2.5 h-2.5 text-gray-400"/>
+            <span className="text-[7px] text-gray-500">Search</span>
+          </div>
+        </div>
+
+        {/* Featured card */}
+        <div className="rounded-xl overflow-hidden mb-3 relative" style={{height:90}}>
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-700/60 to-gray-500/20"/>
+          <div className="absolute inset-0 flex flex-col justify-between p-2">
+            <div className="self-start bg-red-600 text-white text-[6px] font-bold px-1.5 py-0.5 rounded">locally</div>
+            <div>
+              <p className="text-[8px] text-white font-bold leading-tight line-clamp-2">The Hajja governor emphasizes readiness to respond to any escalati...</p>
+              <p className="text-[7px] text-white/60 mt-0.5">3h ago</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Latest News */}
+        <p className="text-[10px] font-bold text-gray-900 mb-1.5">Latest News</p>
+        <div className="space-y-1.5">
+          {[
+            {cat:"LOCALLY",title:"The Minister of Public Works directs readiness measures to t...",time:"12h ago",hasThumb:false},
+            {cat:"LOCALLY",title:"Governor of Hajjah visits families of victims from the Iftar massa...",time:"14h ago",hasThumb:true},
+          ].map((item,i)=>(
+            <div key={i} className="bg-white rounded-xl border border-gray-100 p-2 flex gap-2">
+              <div className="flex-1 min-w-0">
+                <span className="text-[6px] font-bold text-red-500 uppercase tracking-wide">{item.cat}</span>
+                <p className="text-[8px] font-semibold text-gray-900 leading-tight mt-0.5 line-clamp-2">{item.title}</p>
+                <div className="flex items-center gap-0.5 mt-1">
+                  <div className="w-2 h-2 rounded-full border border-gray-300 flex items-center justify-center">
+                    <div className="w-0.5 h-0.5 bg-gray-400 rounded-full"/>
+                  </div>
+                  <span className="text-[7px] text-gray-400">{item.time}</span>
+                </div>
+              </div>
+              {item.hasThumb ? (
+                <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-5 bg-gray-300 rounded"/>
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-gray-100 border border-dashed border-gray-200 flex items-center justify-center flex-shrink-0">
+                  <div className="text-gray-300 text-[14px]">📰</div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoryTabContent() {
+  return (
+    <div className="bg-gray-50 h-full overflow-y-auto">
+      {/* App bar */}
+      <div className="flex items-center gap-2 px-3 pt-2 pb-2 bg-white border-b border-gray-100">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center flex-shrink-0">
+          <Radio className="w-3.5 h-3.5 text-white"/>
+        </div>
+        <span className="text-[10px] font-bold text-gray-900 flex-1">Categories</span>
+        <Search className="w-3.5 h-3.5 text-gray-400"/>
+      </div>
+      <div className="px-3 py-2 space-y-1.5">
+        {[
+          {label:"Local News",   color:"bg-blue-100",   icon:"📰"},
+          {label:"Arabic",       color:"bg-green-100",  icon:"🌍"},
+          {label:"Sports",       color:"bg-orange-100", icon:"⚽"},
+          {label:"Technology",   color:"bg-violet-100", icon:"💻"},
+          {label:"Entertainment",color:"bg-pink-100",   icon:"🎬"},
+          {label:"Science",      color:"bg-cyan-100",   icon:"🔬"},
+        ].map(cat=>(
+          <div key={cat.label} className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-gray-100">
+            <div className={`w-7 h-7 rounded-lg ${cat.color} flex items-center justify-center text-[12px] flex-shrink-0`}>{cat.icon}</div>
+            <span className="text-[9px] font-semibold text-gray-800 flex-1">{cat.label}</span>
+            <ChevronRight className="w-3 h-3 text-gray-300"/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LiveTabContent() {
+  return (
+    <div className="bg-gray-900 h-full overflow-hidden">
+      <div className="flex items-center gap-2 px-3 pt-2 pb-2 bg-black/40">
+        <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"/><span className="text-[8px] text-white font-bold">LIVE</span></div>
+        <span className="text-[10px] font-bold text-white flex-1">Live Streams</span>
+      </div>
+      <div className="p-2.5 space-y-2">
+        <div className="rounded-xl overflow-hidden relative" style={{height:100}}>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-600"/>
+          <div className="absolute top-1.5 left-2 flex items-center gap-1 bg-red-600 rounded px-1 py-0.5">
+            <div className="w-1 h-1 rounded-full bg-white animate-pulse"/>
+            <span className="text-[6px] text-white font-bold">LIVE</span>
+          </div>
+          <div className="absolute bottom-2 left-2 right-2">
+            <div className="h-1 bg-white/20 rounded-full"><div className="h-full w-2/3 bg-orange-400 rounded-full"/></div>
+          </div>
+        </div>
+        {[
+          {title:"Yemen TV — Live Broadcast",sub:"Started 2h ago"},
+          {title:"Al-Masirah Live News",sub:"Started 45m ago"},
+        ].map((s,i)=>(
+          <div key={i} className="flex gap-2 bg-gray-800 rounded-xl p-2">
+            <div className="w-12 h-9 rounded-lg bg-gray-700 flex-shrink-0 flex items-center justify-center">
+              <Radio className="w-3.5 h-3.5 text-gray-500"/>
+            </div>
+            <div>
+              <p className="text-[8px] font-semibold text-white">{s.title}</p>
+              <p className="text-[7px] text-gray-400 mt-0.5">{s.sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WishlistTabContent() {
+  return (
+    <div className="bg-gray-50 h-full overflow-y-auto">
+      <div className="px-3 pt-3 pb-2">
+        <p className="text-[11px] font-bold text-gray-900">Read Later</p>
+        <p className="text-[8px] text-gray-400 mt-0.5">Saved articles</p>
+      </div>
+      <div className="px-3 space-y-1.5">
+        {[
+          {title:"Breaking: UN security council meets on Yemen crisis",time:"2h ago",cat:"World"},
+          {title:"Economic forum opens in Riyadh with 40 nations",time:"5h ago",cat:"Economy"},
+          {title:"New technology breakthrough in solar energy",time:"Yesterday",cat:"Tech"},
+        ].map((item,i)=>(
+          <div key={i} className="bg-white rounded-xl border border-gray-100 p-2.5 flex gap-2">
+            <div className="flex-1 min-w-0">
+              <span className="text-[6px] font-bold text-blue-500 uppercase">{item.cat}</span>
+              <p className="text-[8px] font-semibold text-gray-900 leading-tight mt-0.5 line-clamp-2">{item.title}</p>
+              <p className="text-[7px] text-gray-400 mt-1">{item.time}</p>
+            </div>
+            <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 flex-shrink-0 mt-0.5"/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UserTabContent() {
+  return (
+    <div className="bg-gray-100 h-full overflow-y-auto">
+      {/* Page title */}
+      <div className="px-4 pt-3 pb-2 bg-gray-100">
+        <p className="text-[13px] font-bold text-gray-900">Settings</p>
+      </div>
+
+      {/* PREFERENCES group */}
+      <div className="px-3 mb-2">
+        <p className="text-[7px] font-semibold text-gray-500 uppercase tracking-wider px-1 mb-1">Preferences</p>
+        <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
+          {[
+            {bg:"bg-blue-100",  emoji:"🌐", label:"Language",       sub:"English / العربية", right:"English"},
+            {bg:"bg-red-100",   emoji:"🔔", label:"Notifications",  sub:"News alerts, Live streams", right:null},
+            {bg:"bg-green-100", emoji:"⊞",  label:"Dashboard Mode", sub:"Switch between Native and Web", right:null},
+            {bg:"bg-violet-100",emoji:"🌙", label:"Appearance",     sub:"System", right:null},
+            {bg:"bg-teal-100",  emoji:"Tt", label:"Text Size",      sub:"Change article text size", right:null},
+          ].map(row=>(
+            <div key={row.label} className="flex items-center gap-2 px-3 py-2">
+              <div className={`w-6 h-6 rounded-lg ${row.bg} flex items-center justify-center flex-shrink-0 text-[9px]`}>{row.emoji}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-semibold text-gray-900">{row.label}</p>
+                <p className="text-[7px] text-gray-400">{row.sub}</p>
+              </div>
+              {row.right&&<span className="text-[7px] text-gray-400 mr-1">{row.right}</span>}
+              <ChevronRight className="w-2.5 h-2.5 text-gray-300 flex-shrink-0"/>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* SUPPORT & INFO group */}
+      <div className="px-3">
+        <p className="text-[7px] font-semibold text-gray-500 uppercase tracking-wider px-1 mb-1">Support &amp; Info</p>
+        <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100">
+          {[
+            {bg:"bg-green-100", emoji:"ℹ️",label:"About Us"},
+            {bg:"bg-orange-100",emoji:"✉️",label:"Contact Us"},
+            {bg:"bg-gray-100",  emoji:"🔒",label:"Privacy Policy"},
+          ].map(row=>(
+            <div key={row.label} className="flex items-center gap-2 px-3 py-2">
+              <div className={`w-6 h-6 rounded-lg ${row.bg} flex items-center justify-center flex-shrink-0 text-[9px]`}>{row.emoji}</div>
+              <p className="text-[9px] font-semibold text-gray-900 flex-1">{row.label}</p>
+              <ChevronRight className="w-2.5 h-2.5 text-gray-300 flex-shrink-0"/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// DESIGN SUB-PANELS (center area)
+// =====================================================================
+// ─── Bottom Nav Style Components ─────────────────────────────────────────────
+function NavClassic({ tabs, active, color }: { tabs:string[]; active:number; color:string }) {
+  return (
+    <div className="flex items-center justify-around border-t border-gray-100 py-1 bg-white flex-shrink-0">
+      {tabs.map((t,i)=>(
+        <div key={t} className="flex flex-col items-center gap-0.5">
+          <div style={{width:"10px",height:"10px",borderRadius:"3px",background:i===active?color:"#d1d5db"}}/>
+          <span style={{fontSize:"4px",color:i===active?"#1c1c1e":"#9ca3af",fontWeight:i===active?"700":"400"}}>{t}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+function NavFloating({ tabs, active, accent }: { tabs:string[]; active:number; accent:string }) {
+  const bgs: Record<string,string> = { blue:"bg-blue-600",red:"bg-red-600",orange:"bg-orange-500",rose:"bg-rose-600",violet:"bg-violet-600",green:"bg-green-600",indigo:"bg-indigo-600",dark:"bg-gray-900" };
+  const bg = bgs[accent] ?? "bg-blue-600";
+  return (
+    <div className="px-2 pb-1 flex-shrink-0">
+      <div className={`flex items-center justify-around ${bg} rounded-full py-1 shadow-lg`}>
+        {tabs.map((t,i)=>(
+          <div key={t} className={`flex flex-col items-center gap-0.5 px-1.5 py-0.5 rounded-full ${i===active?"bg-white/25":""}`}>
+            <div className={`w-2 h-2 rounded-sm ${i===active?"bg-white":"bg-white/40"}`}/>
+            <span className={`text-[4px] ${i===active?"text-white font-bold":"text-white/50"}`}>{t}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function NavSegmented({ tabs, active, accent }: { tabs:string[]; active:number; accent:string }) {
+  const pill: Record<string,string> = { blue:"bg-blue-50 border-blue-200",rose:"bg-rose-50 border-rose-200",violet:"bg-violet-50 border-violet-200",green:"bg-green-50 border-green-200",orange:"bg-orange-50 border-orange-200",indigo:"bg-indigo-50 border-indigo-200" };
+  const dot: Record<string,string>  = { blue:"bg-blue-500",rose:"bg-rose-500",violet:"bg-violet-500",green:"bg-green-500",orange:"bg-orange-500",indigo:"bg-indigo-500" };
+  const txt: Record<string,string>  = { blue:"text-blue-600",rose:"text-rose-600",violet:"text-violet-600",green:"text-green-600",orange:"text-orange-600",indigo:"text-indigo-600" };
+  return (
+    <div className="flex items-center justify-around border-t border-gray-100 py-1 px-1 bg-white flex-shrink-0">
+      {tabs.map((t,i)=>(
+        <div key={t} className={`flex flex-col items-center gap-0.5 px-1.5 py-0.5 rounded-full ${i===active?`border ${pill[accent]??"bg-blue-50 border-blue-200"}`:""}`}>
+          <div className={`w-2 h-2 rounded-sm ${i===active?(dot[accent]??"bg-blue-500"):"bg-gray-300"}`}/>
+          <span className={`text-[4px] font-semibold ${i===active?(txt[accent]??"text-blue-600"):"text-gray-400"}`}>{t}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+function NavIconOnly({ tabs, active, accent }: { tabs:string[]; active:number; accent:string }) {
+  const cls: Record<string,string> = { blue:"bg-blue-500",violet:"bg-violet-500",rose:"bg-rose-500",green:"bg-green-500",orange:"bg-orange-500",indigo:"bg-indigo-500" };
+  const ac = cls[accent] ?? "bg-blue-500";
+  return (
+    <div className="flex items-center justify-around border-t border-gray-200 py-2 bg-white flex-shrink-0">
+      {tabs.map((t,i)=>(
+        <div key={t} className={`flex items-center justify-center p-1 rounded-xl ${i===active?"bg-gray-100":""}`}>
+          <div className={`w-3 h-3 rounded ${i===active?ac:"bg-gray-300"}`}/>
+        </div>
+      ))}
+    </div>
+  );
+}
+function NavWave({ tabs, active, accent }: { tabs:string[]; active:number; accent:string }) {
+  const cls: Record<string,string> = { blue:"bg-blue-500",red:"bg-red-500",orange:"bg-orange-500",rose:"bg-rose-500",violet:"bg-violet-500",green:"bg-green-500",indigo:"bg-indigo-500" };
+  const ac = cls[accent] ?? "bg-blue-500";
+  const center = Math.floor(tabs.length / 2);
+  return (
+    <div className="border-t border-gray-100 bg-white pt-0.5 pb-0.5 flex-shrink-0">
+      <div className="flex items-end justify-around">
+        {tabs.map((t,i)=> i===center ? (
+          <div key={t} className="flex flex-col items-center -mt-3">
+            <div className={`w-6 h-6 rounded-full ${ac} shadow-lg flex items-center justify-center`}>
+              <div className="w-2.5 h-2.5 rounded-sm bg-white"/>
+            </div>
+            <span className="text-[4px] text-gray-400 mt-0.5">{t}</span>
+          </div>
+        ) : (
+          <div key={t} className="flex flex-col items-center gap-0.5 pb-0.5">
+            <div className={`w-2.5 h-2.5 rounded-sm ${i===active&&i!==center?ac:"bg-gray-200"}`}/>
+            <span className={`text-[4px] ${i===active&&i!==center?"text-gray-700 font-bold":"text-gray-400"}`}>{t}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function NavDark({ tabs, active, accent }: { tabs:string[]; active:number; accent:string }) {
+  const cls: Record<string,string> = { red:"bg-red-500",violet:"bg-violet-500",blue:"bg-blue-400",green:"bg-green-400",amber:"bg-amber-400",cyan:"bg-cyan-400" };
+  const ac = cls[accent] ?? "bg-red-500";
+  return (
+    <div className="flex items-center justify-around border-t border-white/10 py-1 flex-shrink-0" style={{background:"rgba(0,0,0,0.35)"}}>
+      {tabs.map((t,i)=>(
+        <div key={t} className="flex flex-col items-center gap-0.5">
+          <div className={`w-2.5 h-2.5 rounded-sm ${i===active?ac:"bg-gray-600"}`}/>
+          <span className={`text-[5px] ${i===active?"text-gray-200 font-bold":"text-gray-500"}`}>{t}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Template Screen Previews ────────────────────────────────────────────────
+function TmplNews({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-100 bg-white flex-shrink-0">
+        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-blue-600"/><span className="text-[8px] font-bold text-gray-800 truncate">{name}</span></div>
+        <Search className="w-2.5 h-2.5 text-gray-400"/>
+      </div>
+      <div className="h-14 bg-gradient-to-r from-blue-700 to-blue-500 relative flex-shrink-0 flex items-end p-1.5">
+        <div className="space-y-0.5 flex-1"><div className="h-1.5 bg-white/80 rounded w-24"/><div className="h-1 bg-white/50 rounded w-16"/></div>
+        <span className="absolute top-1 right-1 text-[6px] bg-red-500 text-white px-1 rounded font-bold">LIVE</span>
+      </div>
+      <div className="flex gap-1 px-2 py-1 overflow-hidden flex-shrink-0">
+        {["All","World","Tech","Sports"].map((c,i)=>(
+          <span key={c} className={`text-[5px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${i===0?"bg-blue-500 text-white":"bg-gray-100 text-gray-500"}`}>{c}</span>
+        ))}
+      </div>
+      <div className="flex-1 px-1.5 space-y-1 overflow-hidden">
+        {[80,65,90].map((w,i)=>(
+          <div key={i} className="flex gap-1.5 items-center">
+            <div className="w-8 h-6 bg-gray-200 rounded flex-shrink-0"/>
+            <div className="flex-1 space-y-0.5"><div className="h-1.5 bg-gray-300 rounded" style={{width:`${w}%`}}/><div className="h-1 bg-gray-200 rounded w-1/2"/></div>
+          </div>
+        ))}
+      </div>
+      <NavClassic tabs={["Home","Cat","Live","History","More"]} active={0} color="blue"/>
+    </div>
+  );
+}
+function TmplDark({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-gray-900 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 bg-black/40 border-b border-white/10 flex-shrink-0">
+        <span className="text-[8px] font-bold text-white">{name}</span>
+        <div className="flex gap-1"><div className="w-2 h-2 rounded-sm bg-gray-600"/><Search className="w-2.5 h-2.5 text-gray-400"/></div>
+      </div>
+      <div className="mx-1.5 mt-1.5 h-14 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg relative overflow-hidden flex-shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"/>
+        <div className="absolute top-1 left-1 flex items-center gap-0.5"><div className="w-1 h-1 rounded-full bg-red-500"/><span className="text-[5px] text-red-400 font-bold">LIVE</span></div>
+        <div className="absolute bottom-1.5 left-1.5 space-y-0.5"><div className="h-1.5 bg-white/80 rounded w-20"/><div className="h-1 bg-white/40 rounded w-12"/></div>
+      </div>
+      <div className="flex-1 p-1.5 grid grid-cols-2 gap-1 overflow-hidden">
+        {[1,2,3,4].map(i=>(
+          <div key={i} className="bg-gray-800 rounded overflow-hidden">
+            <div className="h-6 bg-gray-700 relative"><div className="absolute bottom-0.5 right-0.5 text-[4px] bg-black/60 text-white px-0.5 rounded">12:30</div></div>
+            <div className="p-0.5 space-y-0.5"><div className="h-1 bg-gray-600 rounded"/><div className="h-0.5 bg-gray-700 rounded w-2/3"/></div>
+          </div>
+        ))}
+      </div>
+      <NavWave tabs={["Home","Search","Add","Saved","Me"]} active={0} accent="red"/>
+    </div>
+  );
+}
+function TmplMagazine({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 flex-shrink-0">
+        <Menu className="w-2.5 h-2.5 text-gray-500"/>
+        <span className="text-[8px] font-extrabold text-gray-900 italic tracking-tight">{name}</span>
+        <Search className="w-2.5 h-2.5 text-gray-400"/>
+      </div>
+      <div className="h-16 relative overflow-hidden flex-shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70 z-10"/>
+        <div className="absolute inset-0 bg-gradient-to-br from-rose-200 to-amber-100"/>
+        <div className="absolute bottom-1.5 left-2 right-2 z-20 space-y-0.5">
+          <span className="text-[5px] bg-rose-500 text-white px-1 rounded font-bold">FEATURE</span>
+          <div className="h-1.5 bg-white/90 rounded w-3/4"/>
+          <div className="h-1 bg-white/60 rounded w-1/2"/>
+        </div>
+      </div>
+      <div className="flex-1 p-1.5 grid grid-cols-2 gap-1 overflow-hidden">
+        {[["bg-blue-100","World"],["bg-rose-100","Style"],["bg-amber-100","Tech"],["bg-emerald-100","Life"]].map(([bg,label],i)=>(
+          <div key={i} className="rounded overflow-hidden border border-gray-100">
+            <div className={`h-8 ${bg} relative`}><span className="absolute bottom-0.5 left-0.5 text-[4px] font-bold text-gray-600">{label}</span></div>
+            <div className="p-0.5"><div className="h-1 bg-gray-200 rounded w-4/5"/></div>
+          </div>
+        ))}
+      </div>
+      <NavSegmented tabs={["Home","Cat","Live","Saved","Me"]} active={0} accent="rose"/>
+    </div>
+  );
+}
+function TmplFood({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 bg-white border-b border-gray-100 flex-shrink-0">
+        <span className="text-[8px] font-bold text-gray-800">{name}</span>
+        <div className="flex gap-1 items-center"><div className="w-2 h-2 rounded-full bg-orange-100 flex items-center justify-center"><div className="w-1 h-1 rounded-full bg-orange-500"/></div><Search className="w-2.5 h-2.5 text-gray-400"/></div>
+      </div>
+      <div className="h-10 bg-gradient-to-r from-orange-400 to-red-400 mx-1.5 mt-1.5 rounded-lg relative flex-shrink-0 flex items-center px-2">
+        <div className="space-y-0.5"><div className="h-1.5 bg-white/80 rounded w-16"/><div className="h-1 bg-white/50 rounded w-10"/></div>
+        <div className="absolute right-2 w-8 h-8 rounded-full bg-white/20 border border-white/40"/>
+      </div>
+      <div className="flex gap-1 px-1.5 py-1 overflow-hidden flex-shrink-0">
+        {["🍕","🍔","🍜","🌮"].map((e,i)=>(
+          <span key={i} className={`text-[8px] p-0.5 rounded ${i===0?"bg-orange-100":""}`}>{e}</span>
+        ))}
+      </div>
+      <div className="flex-1 px-1.5 grid grid-cols-2 gap-1 overflow-hidden">
+        {[["bg-amber-200"],["bg-red-200"],["bg-orange-200"],["bg-yellow-200"]].map(([hbg],i)=>(
+          <div key={i} className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className={`h-7 ${hbg}`}/>
+            <div className="p-0.5 space-y-0.5"><div className="h-1 bg-gray-200 rounded"/><div className="h-0.5 w-1/2 bg-orange-200 rounded"/></div>
+          </div>
+        ))}
+      </div>
+      <NavFloating tabs={["Home","Search","Cart","Wishlist","Me"]} active={0} accent="orange"/>
+    </div>
+  );
+}
+function TmplMinimal({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 bg-white border-b border-gray-100 flex-shrink-0">
+        <span className="text-[8px] font-bold text-gray-800">{name}</span>
+        <Bell className="w-2.5 h-2.5 text-gray-400"/>
+      </div>
+      <div className="mx-1.5 my-1 h-4 bg-gray-100 rounded-full flex items-center px-1.5 gap-1 flex-shrink-0">
+        <Search className="w-1.5 h-1.5 text-gray-400"/><div className="h-1 bg-gray-300 rounded w-12"/>
+      </div>
+      <div className="flex-1 px-1.5 space-y-1 overflow-hidden">
+        {[1,2,3,4].map(i=>(
+          <div key={i} className="flex gap-1.5 bg-white rounded-lg p-1 border border-gray-100 shadow-sm">
+            <div className="w-7 h-7 bg-gray-100 rounded-lg flex-shrink-0"/>
+            <div className="space-y-0.5 flex-1 pt-0.5">
+              <div className="h-1.5 bg-gray-200 rounded w-4/5"/>
+              <div className="h-1 bg-gray-100 rounded w-1/2"/>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-violet-400 mt-0.5"/>
+          </div>
+        ))}
+      </div>
+      <NavIconOnly tabs={["Home","Cat","Read","Save","Me"]} active={0} accent="violet"/>
+    </div>
+  );
+}
+function TmplShop({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 bg-white border-b border-gray-100 flex-shrink-0">
+        <span className="text-[8px] font-bold text-gray-800">{name}</span>
+        <div className="relative"><div className="w-2.5 h-2.5 rounded bg-gray-300"/><div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500 flex items-center justify-center"><span className="text-[3px] text-white font-bold">2</span></div></div>
+      </div>
+      <div className="mx-1.5 my-1 h-4 bg-gray-100 rounded-lg flex items-center px-1.5 gap-1 flex-shrink-0">
+        <Search className="w-1.5 h-1.5 text-gray-400"/><div className="h-1 bg-gray-300 rounded w-14"/>
+      </div>
+      <div className="mx-1.5 h-8 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-lg flex items-center px-2 mb-1 flex-shrink-0">
+        <div className="space-y-0.5"><div className="h-1.5 bg-white/80 rounded w-14"/><div className="h-1 bg-white/50 rounded w-8"/></div>
+      </div>
+      <div className="flex gap-1 px-1.5 overflow-hidden flex-shrink-0 mb-1">
+        {["All","Women","Men","Kids"].map((c,i)=>(
+          <span key={c} className={`text-[5px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${i===0?"bg-violet-500 text-white":"bg-gray-100 text-gray-500"}`}>{c}</span>
+        ))}
+      </div>
+      <div className="flex-1 px-1.5 grid grid-cols-2 gap-1 overflow-hidden">
+        {["bg-purple-100","bg-fuchsia-100","bg-violet-100","bg-pink-100"].map((bg,i)=>(
+          <div key={i} className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm">
+            <div className={`h-8 ${bg}`}/>
+            <div className="p-0.5 space-y-0.5"><div className="h-1 bg-gray-200 rounded w-3/4"/><div className="h-1 bg-violet-200 rounded w-1/3"/></div>
+          </div>
+        ))}
+      </div>
+      <NavSegmented tabs={["Home","Search","Cart","Wishlist","Me"]} active={0} accent="violet"/>
+    </div>
+  );
+}
+function TmplSocial({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-100 flex-shrink-0">
+        <span className="text-[8px] font-bold text-gray-900">{name}</span>
+        <div className="flex gap-1"><div className="w-2.5 h-2.5 rounded bg-gray-200"/><div className="w-2.5 h-2.5 rounded bg-gray-200"/></div>
+      </div>
+      <div className="flex gap-1.5 px-2 py-1.5 border-b border-gray-100 flex-shrink-0 overflow-hidden">
+        {[["bg-gradient-to-br from-pink-400 to-orange-400","ring-2 ring-orange-300"],["bg-blue-200",""],["bg-green-200",""],["bg-purple-200",""]].map(([bg,ring],i)=>(
+          <div key={i} className="flex flex-col items-center gap-0.5">
+            <div className={`w-5 h-5 rounded-full ${bg} ${ring}`}/>
+            <div className="h-0.5 bg-gray-200 rounded w-5"/>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 space-y-1 overflow-hidden">
+        {[1,2].map(i=>(
+          <div key={i}>
+            <div className="flex items-center gap-1 px-1.5 py-0.5">
+              <div className="w-3 h-3 rounded-full bg-gray-200"/><div className="h-1 bg-gray-200 rounded w-10"/>
+            </div>
+            <div className={`h-14 ${i===1?"bg-gradient-to-br from-purple-100 to-pink-100":"bg-gradient-to-br from-blue-100 to-cyan-100"}`}/>
+            <div className="flex gap-2 px-2 py-0.5">
+              {[1,2,3].map(j=><div key={j} className="w-2.5 h-2.5 rounded-sm bg-gray-200"/>)}
+            </div>
+          </div>
+        ))}
+      </div>
+      <NavClassic tabs={["Home","Search","Add","Reels","Me"]} active={0} color="indigo"/>
+    </div>
+  );
+}
+function TmplSports({ name }: { name: string }) {
+  return (
+    <div className="h-full flex flex-col overflow-hidden" style={{background:"#0d0d0d"}}>
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center gap-1"><div className="w-2 h-2 bg-green-400 rounded-sm"/><span className="text-[8px] font-black text-white">{name}</span></div>
+        <div className="flex items-center gap-0.5"><div className="w-1 h-1 rounded-full bg-green-400"/><span className="text-[5px] text-green-400 font-bold">LIVE</span></div>
+      </div>
+      <div className="mx-1.5 mt-1.5 rounded-lg overflow-hidden flex-shrink-0 border border-green-500/30" style={{background:"#111"}}>
+        <div className="bg-green-500/20 p-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col items-center gap-0.5"><div className="w-4 h-4 rounded-full bg-blue-500"/><div className="h-0.5 bg-gray-600 rounded w-5"/></div>
+            <div className="text-center"><span className="text-[10px] font-black text-white">2 — 1</span><div className="text-[5px] text-green-400 font-bold">67'</div></div>
+            <div className="flex flex-col items-center gap-0.5"><div className="w-4 h-4 rounded-full bg-red-500"/><div className="h-0.5 bg-gray-600 rounded w-5"/></div>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 p-1.5 space-y-1 overflow-hidden">
+        {[1,2,3].map(i=>(
+          <div key={i} className="flex items-center justify-between rounded p-1" style={{background:"#1a1a1a"}}>
+            <div className="h-1 bg-gray-700 rounded w-12"/>
+            <div className="text-[7px] font-bold text-green-400">FT</div>
+            <div className="h-1 bg-gray-700 rounded w-12"/>
+          </div>
+        ))}
+      </div>
+      <NavDark tabs={["Home","Scores","Teams","Videos","Me"]} active={0} accent="green"/>
+    </div>
+  );
+}
+function TmplTravel({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      <div className="relative flex-shrink-0">
+        <div className="h-20 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600">
+          <div className="absolute inset-0 flex flex-col justify-between p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[7px] font-bold text-white">{name}</span>
+              <div className="w-2.5 h-2.5 rounded bg-white/30"/>
+            </div>
+            <div className="bg-white/20 backdrop-blur rounded-lg flex items-center gap-1 px-1.5 py-1">
+              <Search className="w-1.5 h-1.5 text-white/70"/><div className="h-1 bg-white/50 rounded w-16"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-1 px-1.5 py-1 overflow-hidden flex-shrink-0">
+        {["✈️ Flights","🏨 Hotels","🎭 Tours"].map((c,i)=>(
+          <span key={i} className={`text-[5px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${i===0?"bg-blue-500 text-white":"bg-gray-100 text-gray-600"}`}>{c}</span>
+        ))}
+      </div>
+      <div className="flex-1 px-1.5 grid grid-cols-2 gap-1 overflow-hidden">
+        {[["bg-gradient-to-br from-orange-200 to-yellow-200","Paris"],["bg-gradient-to-br from-sky-200 to-cyan-200","Bali"],["bg-gradient-to-br from-rose-200 to-pink-200","Tokyo"],["bg-gradient-to-br from-emerald-200 to-teal-200","NYC"]].map(([bg,city],i)=>(
+          <div key={i} className={`${bg} rounded-lg relative overflow-hidden`} style={{height:"40px"}}>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>
+            <span className="absolute bottom-0.5 left-1 text-[5px] font-bold text-white">{city}</span>
+          </div>
+        ))}
+      </div>
+      <NavFloating tabs={["Home","Search","Trips","Saved","Me"]} active={0} accent="blue"/>
+    </div>
+  );
+}
+function TmplBusiness({ name }: { name: string }) {
+  return (
+    <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-2 py-1.5 bg-indigo-600 flex-shrink-0">
+        <span className="text-[8px] font-bold text-white">{name}</span>
+        <div className="w-2.5 h-2.5 rounded bg-white/30"/>
+      </div>
+      <div className="flex gap-1 p-1.5 flex-shrink-0">
+        {[["bg-blue-500","↑12%"],["bg-green-500","↑8%"],["bg-violet-500","↑24%"]].map(([bg,val],i)=>(
+          <div key={i} className={`flex-1 ${bg} rounded-lg p-1 text-center`}>
+            <div className="h-2 bg-white/30 rounded mb-0.5"/>
+            <span className="text-[5px] text-white font-bold">{val}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mx-1.5 bg-white rounded-lg p-1.5 mb-1 border border-gray-100 flex-shrink-0">
+        <div className="h-1 bg-gray-200 rounded w-16 mb-1"/>
+        <div className="flex items-end gap-0.5 h-8">
+          {[40,65,45,80,55,70,90].map((h,i)=>(
+            <div key={i} className={`flex-1 rounded-t ${i===6?"bg-indigo-500":"bg-indigo-100"}`} style={{height:`${h}%`}}/>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 px-1.5 space-y-1 overflow-hidden">
+        {[1,2,3].map(i=>(
+          <div key={i} className="flex items-center gap-1.5 bg-white rounded-lg p-1 border border-gray-100">
+            <div className="w-3 h-3 rounded bg-indigo-100 flex-shrink-0"/>
+            <div className="flex-1 h-1.5 bg-gray-200 rounded"/>
+            <div className="h-1.5 bg-green-200 rounded w-6"/>
+          </div>
+        ))}
+      </div>
+      <NavClassic tabs={["Dashboard","Analytics","Tasks","Team","Me"]} active={0} color="indigo"/>
+    </div>
+  );
+}
+function TmplMusic({ name }: { name: string }) {
+  return (
+    <div className="h-full flex flex-col overflow-hidden" style={{background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)"}}>
+      <div className="flex items-center justify-between px-2 py-1.5 flex-shrink-0">
+        <span className="text-[8px] font-bold text-white">{name}</span>
+        <div className="flex gap-1"><div className="w-2 h-2 rounded bg-white/20"/><div className="w-2 h-2 rounded bg-white/20"/></div>
+      </div>
+      <div className="flex justify-center pt-1 pb-1 flex-shrink-0">
+        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg relative flex items-center justify-center">
+          <div className="w-4 h-4 rounded-full bg-white/20 border border-white/30"/>
+        </div>
+      </div>
+      <div className="flex-1 px-2 space-y-1 overflow-hidden">
+        <div className="space-y-0.5 text-center"><div className="h-2 bg-white/70 rounded w-20 mx-auto"/><div className="h-1 bg-white/30 rounded w-14 mx-auto"/></div>
+        <div className="h-0.5 bg-white/20 rounded-full mx-1 overflow-hidden"><div className="h-full bg-purple-400 rounded-full" style={{width:"40%"}}/></div>
+        <div className="flex items-center justify-center gap-3">
+          {[1,2,3,4,5].map(i=><div key={i} className={`rounded ${i===3?"w-4 h-4 bg-white":"w-2.5 h-2.5 bg-white/30"}`}/>)}
+        </div>
+        <div className="space-y-0.5">
+          {[1,2,3].map(i=>(
+            <div key={i} className="flex items-center gap-1.5 p-0.5 rounded" style={{background:"rgba(255,255,255,0.07)"}}>
+              <div className="w-4 h-4 rounded bg-white/10 flex-shrink-0"/>
+              <div className="flex-1 space-y-0.5"><div className="h-1 bg-white/30 rounded"/><div className="h-0.5 bg-white/15 rounded w-2/3"/></div>
+              <div className="h-1 bg-white/20 rounded w-3"/>
+            </div>
+          ))}
+        </div>
+      </div>
+      <NavDark tabs={["Home","Search","Library","Radio","Me"]} active={0} accent="violet"/>
+    </div>
+  );
+}
+
+// ─── Template Data ────────────────────────────────────────────────────────────
+type TplDef = { id:number; name:string; appType:string; devices:string[]; Preview:React.FC<{name:string}>; footerStyle:string; headerStyle:string; category:string };
+
+const ALL_TEMPLATES: TplDef[] = [
+  // News / Magazine
+  { id:0,  name:"Al-Majd",        appType:"News, Magazine",         devices:["iOS","Android","PWA"], Preview:TmplNews,     footerStyle:"Classic Tabs",   headerStyle:"Classic",   category:"News" },
+  { id:1,  name:"TechPulse",      appType:"Technology, Blogs",      devices:["iOS","Android"],       Preview:TmplDark,     footerStyle:"Wave Center",    headerStyle:"Gradient",  category:"News" },
+  { id:2,  name:"DailyTimes",     appType:"News, Magazine",         devices:["iOS","Android","PWA"], Preview:TmplMagazine, footerStyle:"Segmented Pill", headerStyle:"Drawer",    category:"News" },
+  { id:5,  name:"Morning Brief",  appType:"Blogs, News",            devices:["iOS","Android","PWA"], Preview:TmplMinimal,  footerStyle:"Icon Only",      headerStyle:"Minimal",   category:"News" },
+  { id:6,  name:"TIME Clone",     appType:"News, Magazine",         devices:["iOS","Android","PWA"], Preview:TmplMagazine, footerStyle:"Segmented Pill", headerStyle:"Drawer",    category:"News" },
+  { id:14, name:"WeeklyWire",     appType:"Blogs, News, Magazine",  devices:["iOS","Android","PWA"], Preview:TmplMinimal,  footerStyle:"Icon Only",      headerStyle:"Minimal",   category:"News" },
+  // Food
+  { id:4,  name:"FreshBites",     appType:"Food, Lifestyle",        devices:["iOS","Android","PWA"], Preview:TmplFood,     footerStyle:"Floating Pill",  headerStyle:"Classic",   category:"Food" },
+  { id:8,  name:"FoodieExplorer", appType:"Food, Restaurant",       devices:["iOS","Android","PWA"], Preview:TmplFood,     footerStyle:"Floating Pill",  headerStyle:"Classic",   category:"Food" },
+  { id:9,  name:"CookBook",       appType:"Food, Recipes",          devices:["iOS","Android"],       Preview:TmplFood,     footerStyle:"Floating Pill",  headerStyle:"Classic",   category:"Food" },
+  { id:11, name:"Sweetness",      appType:"Food, Lifestyle",        devices:["iOS","Android"],       Preview:TmplFood,     footerStyle:"Floating Pill",  headerStyle:"Classic",   category:"Food" },
+  { id:12, name:"TasteShare",     appType:"Food, Social",           devices:["iOS","Android","PWA"], Preview:TmplFood,     footerStyle:"Floating Pill",  headerStyle:"Classic",   category:"Food" },
+  // Shop
+  { id:20, name:"ShopEasy",       appType:"E-Commerce, Retail",     devices:["iOS","Android","PWA"], Preview:TmplShop,     footerStyle:"Segmented Pill", headerStyle:"Classic",   category:"Shop" },
+  { id:21, name:"MarketHub",      appType:"Marketplace",            devices:["iOS","Android","PWA"], Preview:TmplShop,     footerStyle:"Segmented Pill", headerStyle:"Search",    category:"Shop" },
+  { id:22, name:"LuxeStore",      appType:"Fashion, Luxury",        devices:["iOS","Android"],       Preview:TmplShop,     footerStyle:"Icon Only",      headerStyle:"Minimal",   category:"Shop" },
+  // Social
+  { id:30, name:"SnapFeed",       appType:"Social Media",           devices:["iOS","Android"],       Preview:TmplSocial,   footerStyle:"Classic Tabs",   headerStyle:"Classic",   category:"Social" },
+  { id:31, name:"CommunityHub",   appType:"Community, Forum",       devices:["iOS","Android","PWA"], Preview:TmplSocial,   footerStyle:"Classic Tabs",   headerStyle:"Classic",   category:"Social" },
+  { id:32, name:"PortfolioGrid",  appType:"Portfolio, Creative",    devices:["iOS","Android","PWA"], Preview:TmplMinimal,  footerStyle:"Icon Only",      headerStyle:"Minimal",   category:"Social" },
+  // Entertainment
+  { id:3,  name:"CinemaHub",      appType:"Entertainment, Media",   devices:["iOS","Android"],       Preview:TmplDark,     footerStyle:"Wave Center",    headerStyle:"Gradient",  category:"Entertainment" },
+  { id:15, name:"StreamHub",      appType:"Live TV, Streaming",     devices:["iOS","Android"],       Preview:TmplDark,     footerStyle:"Wave Center",    headerStyle:"Gradient",  category:"Entertainment" },
+  { id:10, name:"SportZone",      appType:"Sports, Live Scores",    devices:["iOS","Android","PWA"], Preview:TmplSports,   footerStyle:"Dark Tabs",      headerStyle:"Gradient",  category:"Entertainment" },
+  { id:40, name:"MusicBox",       appType:"Music, Streaming",       devices:["iOS","Android"],       Preview:TmplMusic,    footerStyle:"Dark Tabs",      headerStyle:"Minimal",   category:"Entertainment" },
+  { id:7,  name:"NatureWatch",    appType:"Travel, Lifestyle",      devices:["iOS","Android"],       Preview:TmplTravel,   footerStyle:"Floating Pill",  headerStyle:"Glass",     category:"Entertainment" },
+  // Business
+  { id:100,name:"Enterprise Pro", appType:"Business, Enterprise",   devices:["iOS","Android","PWA"], Preview:TmplBusiness, footerStyle:"Classic Tabs",   headerStyle:"Gradient",  category:"Business" },
+  { id:41, name:"TravelPlanner",  appType:"Travel, Booking",        devices:["iOS","Android","PWA"], Preview:TmplTravel,   footerStyle:"Floating Pill",  headerStyle:"Glass",     category:"Business" },
+  { id:42, name:"AnalyticsPro",   appType:"Analytics, Dashboard",   devices:["iOS","Android","PWA"], Preview:TmplBusiness, footerStyle:"Classic Tabs",   headerStyle:"Gradient",  category:"Business" },
+];
+
+// ─── Live Preview Panel ───────────────────────────────────────────────────────
+function TemplateLivePreview({ tpl }: { tpl: TplDef }) {
+  return (
+    <div className="w-[250px] flex-shrink-0 flex flex-col bg-white border-l border-gray-200 overflow-hidden">
+      <div className="px-4 pt-3 pb-2 border-b border-gray-100 flex-shrink-0">
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Live Preview</p>
+        <p className="text-xs font-bold text-gray-900 mt-0.5 truncate">{tpl.name}</p>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {/* Phone shell */}
+        <div className="px-4 pt-3 flex-shrink-0">
+          <div className="mx-auto w-[164px] rounded-[28px] p-[3px] shadow-2xl shadow-black/20" style={{background:"#1c1c1e"}}>
+            <div className="rounded-[26px] overflow-hidden p-[2px]" style={{background:"#000"}}>
+              {/* Dynamic island */}
+              <div className="flex justify-center pt-1.5 pb-0.5">
+                <div className="w-12 h-2 rounded-full" style={{background:"#1c1c1e"}}/>
+              </div>
+              {/* Screen */}
+              <div className="rounded-b-[22px] overflow-hidden bg-white" style={{height:"268px"}}>
+                {/* Status bar */}
+                <div className="flex items-center justify-between px-2.5 pt-1 bg-white text-[6px] font-semibold text-gray-700">
+                  <span>9:41</span>
+                  <div className="flex items-center gap-0.5">
+                    <div className="flex gap-px items-end h-2">
+                      <div className="w-0.5 h-0.5 bg-gray-700 rounded-sm"/>
+                      <div className="w-0.5 h-1 bg-gray-700 rounded-sm"/>
+                      <div className="w-0.5 h-1.5 bg-gray-700 rounded-sm"/>
+                      <div className="w-0.5 h-2 bg-gray-700 rounded-sm"/>
+                    </div>
+                    <div className="w-3 h-1.5 border border-gray-700 rounded-sm relative ml-0.5">
+                      <div className="absolute inset-[1px] bg-gray-700 rounded-sm"/>
+                    </div>
+                  </div>
+                </div>
+                {/* App content */}
+                <div style={{height:"252px",overflow:"hidden"}}>
+                  <tpl.Preview name={tpl.name}/>
+                </div>
+              </div>
+              {/* Home indicator */}
+              <div className="flex justify-center py-1.5">
+                <div className="w-10 h-0.5 bg-gray-600 rounded-full"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Meta */}
+        <div className="px-4 pt-3 space-y-1.5">
+          <div className="flex items-start gap-2">
+            <span className="text-[9px] text-gray-400 w-14 flex-shrink-0 pt-0.5">Devices</span>
+            <div className="flex flex-wrap gap-1">
+              {tpl.devices.map(d=>(
+                <span key={d} className="text-[8px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded-full font-medium">{d}</span>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-gray-400 w-14 flex-shrink-0">Type</span>
+            <span className="text-[9px] text-gray-700 font-medium">{tpl.appType}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-gray-400 w-14 flex-shrink-0">Footer</span>
+            <span className="text-[9px] text-gray-700 font-medium">{tpl.footerStyle}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-gray-400 w-14 flex-shrink-0">Header</span>
+            <span className="text-[9px] text-gray-700 font-medium">{tpl.headerStyle}</span>
+          </div>
+        </div>
+
+        {/* Footer style options */}
+        <div className="px-4 pt-3">
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Footer Styles</p>
+          <div className="grid grid-cols-3 gap-1">
+            {[
+              {label:"Classic",  desc:"5 tabs + text"},
+              {label:"Floating", desc:"Pill capsule"},
+              {label:"Segmented",desc:"Active pill"},
+              {label:"Icon Only",desc:"No labels"},
+              {label:"Wave",     desc:"Center raised"},
+              {label:"Dark",     desc:"Dark theme"},
+            ].map((s,i)=>(
+              <div key={s.label} className={`rounded-xl p-1.5 border text-center cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50 ${i===0?"border-blue-300 bg-blue-50":"border-gray-200 bg-gray-50"}`}>
+                <p className="text-[7px] font-bold text-gray-700">{s.label}</p>
+                <p className="text-[6px] text-gray-400 mt-0.5 leading-tight">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Header style options */}
+        <div className="px-4 pt-2 pb-4">
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Header Styles</p>
+          <div className="grid grid-cols-3 gap-1">
+            {[
+              {label:"Classic",  desc:"Logo + icons"},
+              {label:"Gradient", desc:"Color fill"},
+              {label:"Glass",    desc:"Frosted blur"},
+              {label:"Drawer",   desc:"Side menu"},
+              {label:"Search",   desc:"Search bar"},
+              {label:"Minimal",  desc:"Borderless"},
+            ].map((s,i)=>(
+              <div key={s.label} className={`rounded-xl p-1.5 border text-center cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50 ${i===0?"border-blue-300 bg-blue-50":"border-gray-200 bg-gray-50"}`}>
+                <p className="text-[7px] font-bold text-gray-700">{s.label}</p>
+                <p className="text-[6px] text-gray-400 mt-0.5 leading-tight">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Apply button */}
+      <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0">
+        <button className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-blue-200/50">
+          <Zap className="w-3.5 h-3.5"/> Use This Template
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Template Card ────────────────────────────────────────────────────────────
+function TemplateCard({ tpl, selected, onSelect }: { tpl:TplDef; selected:boolean; onSelect:(t:TplDef)=>void }) {
+  return (
+    <div
+      onClick={()=>onSelect(tpl)}
+      className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all select-none group ${selected?"border-blue-400 shadow-lg shadow-blue-100/50 ring-2 ring-blue-100":"border-gray-200 hover:border-blue-300 hover:shadow-md"}`}
+      style={{height:"155px"}}
+    >
+      {/* Mini preview */}
+      <div className="absolute inset-x-0 top-0 overflow-hidden" style={{height:"117px"}}>
+        <div style={{transform:"scale(0.72)",transformOrigin:"top left",width:"139%",height:"163px"}}>
+          <tpl.Preview name={tpl.name}/>
+        </div>
+      </div>
+      {/* Name strip */}
+      <div className="absolute bottom-0 inset-x-0 bg-white border-t border-gray-100 px-1.5 py-1">
+        <p className="text-[8px] font-bold text-gray-800 truncate">{tpl.name}</p>
+        <p className="text-[6px] text-gray-400 truncate">{tpl.footerStyle}</p>
+      </div>
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/10 to-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end pb-8">
+        <div className="w-full px-1.5">
+          <div className="flex items-center justify-center gap-1 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[8px] font-bold rounded-lg">
+            <Zap className="w-2.5 h-2.5"/> Preview
+          </div>
+        </div>
+      </div>
+      {/* Selected checkmark */}
+      {selected&&(
+        <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm">
+          <div className="w-1.5 h-1.5 rounded-full bg-white"/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Templates Panel ──────────────────────────────────────────────────────────
+const TEMPLATE_CATEGORIES = ["All","News","Food","Shop","Social","Entertainment","Business"] as const;
+type TplCategory = typeof TEMPLATE_CATEGORIES[number];
+
+function TemplatesPanel() {
+  const [category, setCategory] = useState<TplCategory>("All");
+  const [selected, setSelected] = useState<TplDef|null>(null);
+  const [search, setSearch]     = useState("");
+
+  const filtered = ALL_TEMPLATES.filter(t=>{
+    const matchCat = category==="All" || t.category===category;
+    const q = search.toLowerCase();
+    const matchQ = !q || t.name.toLowerCase().includes(q) || t.appType.toLowerCase().includes(q) || t.footerStyle.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  const catCounts = Object.fromEntries(
+    TEMPLATE_CATEGORIES.map(c=>[c, c==="All" ? ALL_TEMPLATES.length : ALL_TEMPLATES.filter(t=>t.category===c).length])
+  );
+
+  return (
+    <div className="flex-1 flex overflow-hidden">
+      {/* Main area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-gray-200 bg-white flex-shrink-0">
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Choose a Template</h2>
+            <p className="text-[10px] text-gray-400 mt-0.5">{filtered.length} templates · click to preview</p>
+          </div>
+          <div className="ml-auto flex items-center gap-1.5 bg-gray-100 rounded-xl px-2.5 py-1.5 w-36">
+            <Search className="w-3 h-3 text-gray-400 flex-shrink-0"/>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" className="bg-transparent text-[10px] text-gray-700 placeholder:text-gray-400 outline-none w-full"/>
+          </div>
+        </div>
+        {/* Category pills */}
+        <div className="flex items-center gap-1.5 px-5 py-2.5 bg-white border-b border-gray-100 overflow-x-auto flex-shrink-0">
+          {TEMPLATE_CATEGORIES.map(cat=>(
+            <button key={cat} onClick={()=>setCategory(cat)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all ${category===cat?"bg-gray-900 text-white shadow-sm":"bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+              {cat}
+              <span className={`text-[8px] rounded-full px-1 ${category===cat?"bg-white/20 text-white":"bg-gray-200 text-gray-400"}`}>{catCounts[cat]}</span>
+            </button>
+          ))}
+        </div>
+        {/* Grid */}
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          {filtered.length===0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center"><Search className="w-5 h-5"/></div>
+              <p className="text-xs font-medium">No templates found</p>
+            </div>
+          ) : (
+            <div className="grid gap-3" style={{gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))"}}>
+              {filtered.map(tpl=>(
+                <TemplateCard key={tpl.id} tpl={tpl} selected={selected?.id===tpl.id} onSelect={setSelected}/>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right panel */}
+      {selected ? (
+        <TemplateLivePreview tpl={selected}/>
+      ) : (
+        <div className="w-[250px] flex-shrink-0 bg-white border-l border-gray-200 flex flex-col items-center justify-center gap-4 text-center px-5">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100 flex items-center justify-center">
+            <Smartphone className="w-8 h-8 text-blue-300"/>
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-800">Select a template</p>
+            <p className="text-[10px] text-gray-400 leading-relaxed mt-1">Click any template to see a real phone preview with footer and header style options</p>
+          </div>
+          <div className="w-full space-y-1">
+            {["Classic Tabs","Floating Pill","Wave Center","Icon Only","Segmented Pill","Dark Tabs"].map(s=>(
+              <div key={s} className="flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="w-2 h-2 rounded-sm bg-gradient-to-br from-blue-400 to-violet-400 flex-shrink-0"/>
+                <span className="text-[9px] text-gray-500 font-medium">{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AppBarPanel() {
+  const { toast } = useToast();
+  const [titleAlign, setTitleAlign]     = useState<"left"|"center"|"right">("center");
+  const [showSearch, setShowSearch]     = useState(true);
+  const [showNotif, setShowNotif]       = useState(true);
+  const [showMenu, setShowMenu]         = useState(false);
+  const [showLogo, setShowLogo]         = useState(true);
+  const [appBarBg, setAppBarBg]         = useState("#1e3a5f");
+  const [titleColor, setTitleColor]     = useState("#ffffff");
+  const [iconColor, setIconColor]       = useState("#ffffff");
+  const [appBarStyle, setAppBarStyle]   = useState<"filled"|"transparent"|"elevated">("filled");
+  const [titleText, setTitleText]       = useState("en.yementv.tv");
+  const defaultAppBar = { titleAlign:"center" as const, showSearch:true, showNotif:true, showMenu:false, showLogo:true, appBarBg:"#1e3a5f", titleColor:"#ffffff", iconColor:"#ffffff", appBarStyle:"filled" as const, titleText:"en.yementv.tv" };
+
+  return (
+    <div className="flex-1 overflow-auto p-6">
+      <div className="max-w-2xl mx-auto space-y-5">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">AppBar Designer</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Configure the top navigation bar of your app</p>
+        </div>
+
+        {/* Live preview */}
+        <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3" style={{backgroundColor:appBarBg}}>
+            {showMenu&&<Menu className="w-5 h-5 flex-shrink-0" style={{color:iconColor}}/>}
+            {showLogo&&<div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"><Zap className="w-3 h-3" style={{color:iconColor}}/></div>}
+            <span className={`text-sm font-bold flex-1 ${titleAlign==="center"?"text-center":titleAlign==="right"?"text-right":"text-left"} px-2`} style={{color:titleColor}}>{titleText}</span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {showSearch&&<Search className="w-4 h-4" style={{color:iconColor}}/>}
+              {showNotif&&<Bell className="w-4 h-4" style={{color:iconColor}}/>}
+              <User className="w-4 h-4" style={{color:iconColor}}/>
+            </div>
+          </div>
+          <div className="h-16 bg-gray-100 flex items-center justify-center">
+            <span className="text-[10px] text-gray-400">App content here</span>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Style */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Style</p>
+            <div className="flex gap-2">
+              {(["filled","transparent","elevated"] as const).map(s=>(
+                <button key={s} onClick={()=>setAppBarStyle(s)}
+                  className={`flex-1 py-1.5 text-[10px] font-medium rounded-lg border capitalize transition-colors ${appBarStyle===s?"bg-violet-50 border-violet-400 text-violet-700":"border-gray-200 text-gray-500 hover:border-gray-300"}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-gray-600 block">Title Text</label>
+              <input value={titleText} onChange={e=>setTitleText(e.target.value)}
+                className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-violet-400"/>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-gray-600 block">Title Alignment</label>
+              <div className="flex gap-1">
+                {([["left",<AlignLeft className="w-3.5 h-3.5"/>],["center",<AlignCenter className="w-3.5 h-3.5"/>],["right",<AlignRight className="w-3.5 h-3.5"/>]] as const).map(([a,icon])=>(
+                  <button key={a} onClick={()=>setTitleAlign(a as any)}
+                    className={`flex-1 flex items-center justify-center py-1.5 rounded-lg border transition-colors ${titleAlign===a?"bg-violet-50 border-violet-400 text-violet-700":"border-gray-200 text-gray-500"}`}>
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Colors */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Colors</p>
+            {[
+              {label:"Background",val:appBarBg,set:setAppBarBg},
+              {label:"Title Color",val:titleColor,set:setTitleColor},
+              {label:"Icon Color",val:iconColor,set:setIconColor},
+            ].map(({label,val,set})=>(
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">{label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-mono">{val}</span>
+                  <label className="w-7 h-7 rounded-lg border border-gray-200 overflow-hidden cursor-pointer">
+                    <input type="color" value={val} onChange={e=>set(e.target.value)} className="opacity-0 absolute"/>
+                    <div className="w-full h-full rounded" style={{backgroundColor:val}}/>
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Visibility toggles */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Visible Elements</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {label:"Logo / Icon",   val:showLogo,   set:setShowLogo},
+              {label:"Search Button", val:showSearch,  set:setShowSearch},
+              {label:"Notifications", val:showNotif,   set:setShowNotif},
+              {label:"Hamburger Menu",val:showMenu,    set:setShowMenu},
+            ].map(({label,val,set})=>(
+              <div key={label} className="flex items-center justify-between py-1">
+                <span className="text-xs text-gray-600">{label}</span>
+                <Toggle value={val} onChange={()=>set(v=>!v)}/>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button onClick={()=>{ setTitleAlign(defaultAppBar.titleAlign); setShowSearch(defaultAppBar.showSearch); setShowNotif(defaultAppBar.showNotif); setShowMenu(defaultAppBar.showMenu); setShowLogo(defaultAppBar.showLogo); setAppBarBg(defaultAppBar.appBarBg); setTitleColor(defaultAppBar.titleColor); setIconColor(defaultAppBar.iconColor); setAppBarStyle(defaultAppBar.appBarStyle); setTitleText(defaultAppBar.titleText); toast({ title:"Reset", description:"AppBar settings restored to defaults." }); }} className="px-4 py-2 text-xs font-medium border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Reset</button>
+          <button onClick={()=>toast({ title:"Saved ✓", description:"AppBar settings have been saved." })} className="px-4 py-2 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TabBarPanel({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange:(t:TabKey)=>void }) {
+  const { toast } = useToast();
+  const [tabStyle, setTabStyle]           = useState<"bottom"|"top">("bottom");
+  const [activeColor, setActiveColor]     = useState("#f97316");
+  const [inactiveColor, setInactiveColor] = useState("#9ca3af");
+  const [bgColor, setBgColor]             = useState("#ffffff");
+  const [showLabels, setShowLabels]       = useState(true);
+  const [showIcons, setShowIcons]         = useState(true);
+  const [tabItems, setTabItems]           = useState(APP_TABS.map(t=>({...t,visible:true})));
+
+  return (
+    <div className="flex-1 overflow-auto p-6">
+      <div className="max-w-2xl mx-auto space-y-5">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">TabBar Designer</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Customise the bottom navigation tabs</p>
+        </div>
+
+        {/* Live preview */}
+        <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+          <div className="h-24 bg-gray-100 flex items-center justify-center">
+            <span className="text-[10px] text-gray-400">App content area</span>
+          </div>
+          <div className="flex items-center justify-around px-2 py-2 border-t" style={{backgroundColor:bgColor}}>
+            {tabItems.filter(t=>t.visible).map(tab=>(
+              <button key={tab.key} onClick={()=>onTabChange(tab.key)}
+                className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg">
+                {showIcons&&<span className="[&_svg]:w-4 [&_svg]:h-4" style={{color:activeTab===tab.key?activeColor:inactiveColor}}>{tab.icon}</span>}
+                {showLabels&&<span className="text-[9px] font-medium" style={{color:activeTab===tab.key?activeColor:inactiveColor}}>{tab.label}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Position</p>
+            <div className="flex gap-2">
+              {(["bottom","top"] as const).map(s=>(
+                <button key={s} onClick={()=>setTabStyle(s)}
+                  className={`flex-1 py-1.5 text-[10px] font-medium rounded-lg border capitalize transition-colors ${tabStyle===s?"bg-violet-50 border-violet-400 text-violet-700":"border-gray-200 text-gray-500"}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-600">Show Icons</span><Toggle value={showIcons} onChange={()=>setShowIcons(v=>!v)}/></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-600">Show Labels</span><Toggle value={showLabels} onChange={()=>setShowLabels(v=>!v)}/></div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Colors</p>
+            {[
+              {label:"Active",val:activeColor,set:setActiveColor},
+              {label:"Inactive",val:inactiveColor,set:setInactiveColor},
+              {label:"Background",val:bgColor,set:setBgColor},
+            ].map(({label,val,set})=>(
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">{label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-mono text-[10px]">{val}</span>
+                  <label className="w-6 h-6 rounded border border-gray-200 overflow-hidden cursor-pointer relative">
+                    <input type="color" value={val} onChange={e=>set(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"/>
+                    <div className="w-full h-full rounded" style={{backgroundColor:val}}/>
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab items reorder */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">Tab Items</p>
+          <div className="space-y-1.5">
+            {tabItems.map((tab,i)=>(
+              <div key={tab.key} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                <GripVertical className="w-4 h-4 text-gray-300 cursor-grab"/>
+                <span className="text-gray-400 [&_svg]:w-4 [&_svg]:h-4">{tab.icon}</span>
+                <span className="text-xs font-medium text-gray-700 flex-1">{tab.key}</span>
+                <Toggle value={tab.visible} onChange={()=>setTabItems(prev=>prev.map((t,j)=>j===i?{...t,visible:!t.visible}:t))}/>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button onClick={()=>{ setTabStyle("bottom"); setActiveColor("#f97316"); setInactiveColor("#9ca3af"); setBgColor("#ffffff"); setShowLabels(true); setShowIcons(true); setTabItems(APP_TABS.map(t=>({...t,visible:true}))); toast({ title:"Reset", description:"TabBar settings restored to defaults." }); }} className="px-4 py-2 text-xs font-medium border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Reset</button>
+          <button onClick={()=>toast({ title:"Saved ✓", description:"TabBar settings have been saved." })} className="px-4 py-2 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const DEFAULT_MENU_ITEMS = [
+  {id:1,label:"Home",icon:"Home",visible:true},
+  {id:2,label:"My Profile",icon:"User",visible:true},
+  {id:3,label:"Settings",icon:"Settings",visible:true},
+  {id:4,label:"Notifications",icon:"Bell",visible:true},
+  {id:5,label:"Help & Support",icon:"HelpCircle",visible:true},
+  {id:6,label:"Privacy Policy",icon:"Shield",visible:false},
+  {id:7,label:"Logout",icon:"LogOut",visible:true},
+];
+
+function SideMenuPanel() {
+  const { toast } = useToast();
+  const nextIdRef = useRef(8);
+  const [menuItems, setMenuItems] = useState(DEFAULT_MENU_ITEMS.map(i=>({...i})));
+  const [menuBg, setMenuBg]         = useState("#1e293b");
+  const [textColor, setTextColor]   = useState("#f8fafc");
+  const [accentColor,setAccent]     = useState("#8b5cf6");
+  const [showHeader, setShowHeader] = useState(true);
+  const [menuWidth, setMenuWidth]   = useState(280);
+
+  return (
+    <div className="flex-1 overflow-auto p-6">
+      <div className="max-w-2xl mx-auto space-y-5">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Side Menu Designer</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Configure the slide-out navigation drawer</p>
+        </div>
+
+        {/* Live preview */}
+        <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm flex h-52">
+          <div className="w-48 flex-shrink-0 flex flex-col" style={{backgroundColor:menuBg}}>
+            {showHeader&&(
+              <div className="px-3 py-3 border-b border-white/10">
+                <div className="w-8 h-8 rounded-full mb-2" style={{backgroundColor:accentColor}}/>
+                <div className="h-2 w-20 rounded bg-white/30 mb-1"/>
+                <div className="h-1.5 w-14 rounded bg-white/20"/>
+              </div>
+            )}
+            <div className="flex-1 py-2 overflow-hidden">
+              {menuItems.filter(m=>m.visible).slice(0,5).map(item=>(
+                <div key={item.id} className="flex items-center gap-2.5 px-3 py-1.5">
+                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor:accentColor+"60"}}/>
+                  <span className="text-[10px] font-medium" style={{color:textColor}}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 bg-gray-100 flex items-center justify-center">
+            <span className="text-[10px] text-gray-400">App content</span>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Settings</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-600">Show Header</span><Toggle value={showHeader} onChange={()=>setShowHeader(v=>!v)}/></div>
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 block mb-1">Menu Width: {menuWidth}px</label>
+              <input type="range" min={200} max={340} value={menuWidth} onChange={e=>setMenuWidth(+e.target.value)}
+                className="w-full accent-violet-500"/>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Colors</p>
+            {[
+              {label:"Background",val:menuBg,set:setMenuBg},
+              {label:"Text",val:textColor,set:setTextColor},
+              {label:"Accent",val:accentColor,set:setAccent},
+            ].map(({label,val,set})=>(
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">{label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 font-mono">{val}</span>
+                  <label className="w-6 h-6 rounded border border-gray-200 overflow-hidden cursor-pointer relative">
+                    <input type="color" value={val} onChange={e=>set(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"/>
+                    <div className="w-full h-full" style={{backgroundColor:val}}/>
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Menu items */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Menu Items</p>
+            <button onClick={()=>{ const id=nextIdRef.current++; setMenuItems(prev=>[...prev,{id,label:"New Item",icon:"Star",visible:true}]); toast({title:"Item Added",description:"New menu item added. Rename it as needed."}); }} className="flex items-center gap-1 text-[10px] text-violet-600 font-medium hover:text-violet-700">
+              <Plus className="w-3 h-3"/> Add Item
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {menuItems.map((item,i)=>(
+              <div key={item.id} className={`flex items-center gap-3 p-2 rounded-lg border transition-colors ${item.visible?"bg-gray-50 border-gray-100":"bg-gray-50/50 border-gray-100 opacity-50"}`}>
+                <GripVertical className="w-4 h-4 text-gray-300 cursor-grab flex-shrink-0"/>
+                <span className="text-xs font-medium text-gray-700 flex-1">{item.label}</span>
+                <Toggle value={item.visible} onChange={()=>setMenuItems(prev=>prev.map((m,j)=>j===i?{...m,visible:!m.visible}:m))}/>
+                <button onClick={()=>{ setMenuItems(prev=>prev.filter((_,j)=>j!==i)); toast({title:"Item Removed",description:`"${item.label}" removed from menu.`}); }} className="p-1 rounded hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors">
+                  <Trash2 className="w-3 h-3"/>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button onClick={()=>{ setMenuItems(DEFAULT_MENU_ITEMS.map(i=>({...i}))); setMenuBg("#1e293b"); setTextColor("#f8fafc"); setAccent("#8b5cf6"); setShowHeader(true); setMenuWidth(280); toast({ title:"Reset", description:"Side menu settings restored to defaults." }); }} className="px-4 py-2 text-xs font-medium border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Reset</button>
+          <button onClick={()=>toast({ title:"Saved ✓", description:"Side menu settings have been saved." })} className="px-4 py-2 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LayoutsPanel() {
+  const { toast } = useToast();
+  const [selectedLayout, setSelectedLayout] = useState<DesignLayout>("Home");
+  const [colCount, setColCount]             = useState(2);
+  const [spacing, setSpacing]               = useState(8);
+  const [showTitle, setShowTitle]           = useState(true);
+  const [showThumb, setShowThumb]           = useState(true);
+  const [showDesc, setShowDesc]             = useState(false);
+  const [cardRadius, setCardRadius]         = useState(8);
+
+  return (
+    <div className="flex-1 overflow-auto p-6">
+      <div className="max-w-2xl mx-auto space-y-5">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Layout Settings</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Configure how content is displayed in each section</p>
+        </div>
+
+        {/* Layout picker */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">Design Layout</p>
+          <div className="grid grid-cols-4 gap-2">
+            {DESIGN_LAYOUTS.map(layout=>(
+              <button key={layout} onClick={()=>setSelectedLayout(layout)}
+                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all ${
+                  selectedLayout===layout?"border-violet-500 bg-violet-50 text-violet-700":"border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-300"}`}>
+                <span className={`[&_svg]:w-5 [&_svg]:h-5 ${selectedLayout===layout?"text-violet-500":"text-gray-400"}`}>{LAYOUT_ICONS[layout]}</span>
+                <span className="text-[9px] font-semibold leading-tight text-center">{layout}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Display options */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Grid Options</p>
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 block mb-1">Columns: {colCount}</label>
+              <input type="range" min={1} max={4} value={colCount} onChange={e=>setColCount(+e.target.value)} className="w-full accent-violet-500"/>
+              <div className="flex justify-between text-[9px] text-gray-400 mt-0.5"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 block mb-1">Spacing: {spacing}px</label>
+              <input type="range" min={0} max={24} value={spacing} onChange={e=>setSpacing(+e.target.value)} className="w-full accent-violet-500"/>
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 block mb-1">Card Radius: {cardRadius}px</label>
+              <input type="range" min={0} max={24} value={cardRadius} onChange={e=>setCardRadius(+e.target.value)} className="w-full accent-violet-500"/>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Visibility</p>
+            {[
+              {label:"Show Thumbnail",val:showThumb,set:setShowThumb},
+              {label:"Show Title",    val:showTitle,set:setShowTitle},
+              {label:"Show Description",val:showDesc,set:setShowDesc},
+            ].map(({label,val,set})=>(
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">{label}</span>
+                <Toggle value={val} onChange={()=>set(v=>!v)}/>
+              </div>
+            ))}
+
+            {/* Mini preview */}
+            <div className="mt-2 pt-2 border-t border-gray-100">
+              <p className="text-[10px] text-gray-400 mb-2">Preview</p>
+              <div className="grid gap-1" style={{gridTemplateColumns:`repeat(${colCount},1fr)`,gap:`${spacing/4}px`}}>
+                {Array.from({length:colCount*2}).map((_,i)=>(
+                  <div key={i} className="bg-gray-100 overflow-hidden" style={{borderRadius:`${cardRadius}px`}}>
+                    {showThumb&&<div className="bg-gray-300 h-8"/>}
+                    {showTitle&&<div className="px-1 py-0.5"><div className="h-1.5 bg-gray-400/50 rounded"/></div>}
+                    {showDesc&&<div className="px-1 pb-0.5"><div className="h-1 bg-gray-300 rounded w-3/4"/></div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button onClick={()=>{ setSelectedLayout("Home"); setColCount(2); setSpacing(8); setShowTitle(true); setShowThumb(true); setShowDesc(false); setCardRadius(8); toast({ title:"Reset", description:"Layout settings restored to defaults." }); }} className="px-4 py-2 text-xs font-medium border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Reset</button>
+          <button onClick={()=>toast({ title:"Saved ✓", description:"Layout settings have been saved." })} className="px-4 py-2 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// LEFT SIDEBAR
+// =====================================================================
+function LeftSidebar({
+  activeSection, onSectionChange,
+  activeDesignSub, onDesignSubChange,
+  isDark, onToggleDark,
+}: {
+  activeSection: SidebarSection;
+  onSectionChange: (s: SidebarSection) => void;
+  activeDesignSub: DesignSubItem;
+  onDesignSubChange: (s: DesignSubItem) => void;
+  isDark: boolean;
+  onToggleDark: () => void;
+}) {
+  const mainNav: { key: SidebarSection; icon: React.ReactNode; label: string }[] = [
+    { key:"Dashboard",        icon:<LayoutDashboard className="w-4 h-4"/>, label:"Dashboard" },
+    { key:"Design",           icon:<Paintbrush className="w-4 h-4"/>,      label:"Design" },
+    { key:"Features",         icon:<Puzzle className="w-4 h-4"/>,          label:"Features" },
+    { key:"Build",            icon:<Hammer className="w-4 h-4"/>,          label:"Build" },
+    { key:"Chat",             icon:<MessageSquare className="w-4 h-4"/>,   label:"Chat" },
+    { key:"Dynamic Links",    icon:<Link2 className="w-4 h-4"/>,           label:"Dynamic Links" },
+    { key:"Product License",  icon:<ShieldCheck className="w-4 h-4"/>,     label:"Product License" },
+  ];
+
+  const designSubItems: { label: DesignSubItem & string; icon: React.ReactNode }[] = [
+    { label:"Templates", icon:<LayoutTemplate className="w-3.5 h-3.5"/> },
+    { label:"AppBar",    icon:<SquareStack className="w-3.5 h-3.5"/> },
+    { label:"TabBar",    icon:<Rows3 className="w-3.5 h-3.5"/> },
+    { label:"Side Menu", icon:<PanelLeft className="w-3.5 h-3.5"/> },
+    { label:"Layouts",   icon:<Grid className="w-3.5 h-3.5"/> },
+  ];
+
+  return (
+    <div className="w-56 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 flex flex-col h-full select-none">
+      {/* User / app header */}
+      <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-blue-600 underline truncate cursor-pointer hover:text-blue-800">fluxchat.myshopify.com</p>
+          </div>
+          <span className="text-[10px] text-gray-400 font-medium flex-shrink-0">Free</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-gray-500 dark:text-gray-400">Your Task list: 0/4</span>
+          <Settings className="w-3.5 h-3.5 text-gray-400 cursor-pointer hover:text-gray-600"/>
+        </div>
+      </div>
+
+      {/* Main nav */}
+      <nav className="flex-1 overflow-y-auto py-2 px-2">
+        {mainNav.map(({ key, icon, label }) => (
+          <div key={key}>
+            <button
+              onClick={() => {
+                onSectionChange(key);
+                if (key !== "Design") {
+                  onDesignSubChange(null);
+                }
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors text-sm font-medium mb-0.5 ${
+                activeSection === key
+                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+              }`}
+            >
+              <span className={activeSection===key?"text-blue-600 dark:text-blue-400":"text-gray-400 dark:text-gray-500"}>{icon}</span>
+              <span className="flex-1">{label}</span>
+            </button>
+
+            {key==="Design" && (
+              <div className="ml-6 mb-1">
+                {designSubItems.map(sub=>(
+                  <button
+                    key={sub.label}
+                    onClick={()=>{
+                      onSectionChange("Design");
+                      onDesignSubChange(activeDesignSub===sub.label ? null : sub.label as DesignSubItem);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      activeDesignSub===sub.label && activeSection==="Design"
+                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
+                    }`}
+                  >
+                    <span className={activeDesignSub===sub.label && activeSection==="Design"?"text-blue-500":"text-gray-400 dark:text-gray-500"}>{sub.icon}</span>
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </nav>
+
+      {/* Active plan card */}
+      <div className="px-3 pb-2">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+          <p className="text-sm font-bold text-green-800 dark:text-green-300 mb-0.5">Active plan</p>
+          <p className="text-[11px] text-green-600 dark:text-green-400 mb-3">Unlock advance features</p>
+          <button className="w-full py-2 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
+            Upgrade
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+        <p className="text-[10px] text-gray-400">Mobile-WP v2.4</p>
+        <div className="flex gap-2 mt-1.5">
+          <button
+            onClick={() => isDark && onToggleDark()}
+            className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded border transition-colors ${
+              !isDark
+                ? "bg-white border-gray-200 text-gray-700 font-semibold"
+                : "bg-transparent border-transparent text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            <Sun className="w-3 h-3"/> Light
+          </button>
+          <button
+            onClick={() => !isDark && onToggleDark()}
+            className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded border transition-colors ${
+              isDark
+                ? "bg-gray-700 border-gray-600 text-gray-100 font-semibold"
+                : "bg-transparent border-transparent text-gray-500 hover:bg-gray-100"
+            }`}
+          >
+            <Moon className="w-3 h-3"/> Dark
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// RIGHT PANEL
+// =====================================================================
+function DashboardRightPanel() {
+  return (
+    <div className="w-56 bg-white border-l border-gray-100 flex flex-col h-full overflow-y-auto">
+      <div className="px-4 py-4 border-b border-gray-100">
+        <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
+      </div>
+      <div className="flex-1 px-4 py-6 border-b border-gray-100">
+        <p className="text-xs text-gray-300 text-center">No notifications</p>
+      </div>
+      <div className="px-4 py-4">
+        <h3 className="text-sm font-bold text-gray-900">Documents</h3>
+      </div>
+      <div className="flex-1 px-4 py-6">
+        <p className="text-xs text-gray-300 text-center">No documents</p>
+      </div>
+    </div>
+  );
+}
+
+function RightPanel({ activeTab, activeLayout, onLayoutChange }: {
+  activeTab: TabKey;
+  activeLayout: DesignLayout;
+  onLayoutChange: (l: DesignLayout) => void;
+}) {
+  const [itemStyle, setItemStyle]       = useState("listTile");
+  const [showBg, setShowBg]             = useState(true);
+  const [requiredLogin, setRequired]    = useState(false);
+  const [enableForward, setForward]     = useState(false);
+  const [enableBackward, setBackward]   = useState(false);
+  const [showTabMenu, setShowTabMenu]   = useState(true);
+
+  return (
+    <div className="w-72 bg-white border-l border-gray-100 flex flex-col h-full overflow-y-auto">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1 px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <span className="text-xs text-gray-400 flex items-center gap-1"><Monitor className="w-3.5 h-3.5"/> App Info</span>
+        <ChevronRight className="w-3 h-3 text-gray-300"/>
+        <span className="text-xs font-semibold text-gray-800">{activeTab}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[9px] bg-red-50 text-red-500 border border-red-200 px-1.5 py-0.5 rounded font-medium">New!</span>
+          <Trash2 className="w-3.5 h-3.5 text-red-400 cursor-pointer hover:text-red-600"/>
+        </div>
+      </div>
+
+      {/* Tab thumbnails */}
+      <div className="flex gap-2 px-4 py-3 border-b border-gray-100 overflow-x-auto">
+        {APP_TABS.map(tab=>(
+          <button key={tab.key} className="flex flex-col items-center gap-1 flex-shrink-0">
+            <div className={`w-12 h-16 rounded border-2 transition-colors overflow-hidden ${activeTab===tab.key?"border-blue-500":"border-gray-200"} bg-gray-50 flex items-center justify-center`}>
+              <span className="text-gray-400 [&_svg]:w-4 [&_svg]:h-4">{tab.icon}</span>
+            </div>
+            <span className="text-[9px] text-gray-500 font-medium">{tab.key}</span>
+          </button>
+        ))}
+        <button className="flex flex-col items-center gap-1 flex-shrink-0">
+          <div className="w-12 h-16 rounded border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 hover:border-violet-300 transition-colors">
+            <Plus className="w-4 h-4 text-gray-300"/>
+          </div>
+        </button>
+      </div>
+
+      {/* Design Layout grid */}
+      <div className="px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+            Design Layout <HelpCircle className="w-3 h-3 text-gray-400"/>
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-gray-400"/>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          {DESIGN_LAYOUTS.map(layout=>(
+            <button key={layout} onClick={()=>onLayoutChange(layout)}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                activeLayout===layout?"border-blue-500 bg-blue-50 text-blue-600":"border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-300"}`}>
+              <span className={`[&_svg]:w-4 [&_svg]:h-4 ${activeLayout===layout?"text-blue-500":"text-gray-400"}`}>{LAYOUT_ICONS[layout]}</span>
+              <span className="text-[8px] font-medium leading-tight text-center">{layout}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Style */}
+      <div className="px-4 py-3 border-b border-gray-100">
+        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-2.5">Style</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600">Item Style</span>
+          <select value={itemStyle} onChange={e=>setItemStyle(e.target.value)}
+            className="text-xs border border-gray-200 rounded px-2 py-1 bg-white text-gray-700 focus:outline-none focus:border-violet-400">
+            <option value="listTile">listTile</option>
+            <option value="grid">Grid</option>
+            <option value="card">Card</option>
+            <option value="carousel">Carousel</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Background */}
+      <div className="px-4 py-3 border-b border-gray-100">
+        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-2.5">Background</span>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-600">Show Background</span>
+          <Toggle value={showBg} onChange={()=>setShowBg(v=>!v)}/>
+        </div>
+        {showBg&&(
+          <>
+            <p className="text-xs text-gray-500 mb-2">Background Image</p>
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-2 flex flex-col items-end gap-1">
+              <div className="flex gap-1">
+                <button className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 transition-colors"><Link2 className="w-3 h-3 text-gray-500"/></button>
+                <button className="p-1.5 rounded bg-gray-100 hover:bg-red-100 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3 text-gray-500"/></button>
+              </div>
+              <div className="w-full h-16 rounded bg-gradient-to-br from-blue-400 via-violet-400 to-orange-300 opacity-70"/>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Page settings */}
+      {activeLayout==="Page"&&(
+        <div className="px-4 py-3 border-b border-gray-100 space-y-3">
+          <div>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Page Title</label>
+            <input className="w-full text-xs border border-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-violet-400 bg-gray-50" placeholder="Enter title..."/>
+          </div>
+          <div>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Website</label>
+            <input className="w-full text-xs border border-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-violet-400 bg-gray-50" defaultValue="https://yementv.tv/live"/>
+          </div>
+          <div>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Script <span className="text-gray-400 font-normal normal-case">optional</span></label>
+            <textarea className="w-full text-xs border border-gray-200 rounded px-2.5 py-2 focus:outline-none focus:border-violet-400 bg-gray-50 h-16 resize-none" placeholder="Enter javascript code..."/>
+          </div>
+        </div>
+      )}
+
+      {/* Settings */}
+      <div className="px-4 py-3 space-y-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">Settings <HelpCircle className="w-3 h-3 text-gray-400"/></span>
+          <ChevronDown className="w-3.5 h-3.5 text-gray-400"/>
+        </div>
+        {[
+          {label:"Required Login", val:requiredLogin, set:setRequired},
+          {label:"Enable Forward",  val:enableForward, set:setForward},
+          {label:"Enable Backward", val:enableBackward,set:setBackward},
+        ].map(({label,val,set})=>(
+          <div key={label} className="flex items-center justify-between">
+            <span className="text-xs text-gray-600 flex items-center gap-1">{label} <HelpCircle className="w-3 h-3 text-gray-400"/></span>
+            <Toggle value={val} onChange={()=>set((v:boolean)=>!v)}/>
+          </div>
+        ))}
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600 flex items-center gap-1">Show Tab Menu <HelpCircle className="w-3 h-3 text-gray-400"/></span>
+          <Toggle value={showTabMenu} onChange={()=>setShowTabMenu(v=>!v)}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// FEATURES PANEL
+// =====================================================================
+const FEATURES_DATA = [
+  {
+    section: "FIREBASE",
+    items: [
+      { label: "Firebase",                 enabled: true  },
+      { label: "Firebase Push Notification", enabled: false },
+      { label: "Firebase Remote Config",   enabled: false, badge: "new" },
+      { label: "Firebase Analytics",       enabled: false },
+    ],
+  },
+  {
+    section: "FACEBOOK",
+    items: [
+      { label: "Facebook",                 enabled: false },
+      { label: "Facebook App Events",      enabled: false },
+    ],
+  },
+  {
+    section: "TOOLS",
+    items: [
+      { label: "Import Data",              enabled: false },
+      { label: "Export Data",              enabled: false },
+      { label: "Cloud Config",             enabled: false },
+      { label: "App Performance",          enabled: false },
+      { label: "Deploy Stripe Payment",    enabled: false, badge: "new" },
+    ],
+  },
+  {
+    section: "BRANDING",
+    items: [
+      { label: "Theme & Logo",             enabled: false },
+      { label: "Color Override",           enabled: false },
+      { label: "Loading Icon",             enabled: false },
+      { label: "Splash Screen",            enabled: false },
+      { label: "Onboarding",               enabled: false },
+      { label: "Notification Request Screen", enabled: false },
+      { label: "Privacy & Security",       enabled: false },
+      { label: "Age Restriction",          enabled: false },
+      { label: "Smart Chat",               enabled: false },
+      { label: "Smart Banner",             enabled: false },
+    ],
+  },
+  {
+    section: "GENERAL",
+    items: [
+      { label: "Languages",                enabled: true  },
+      { label: "Translation Override",     enabled: false },
+      { label: "Sign In/Sign Up",          enabled: false },
+      { label: "Blog Integration",         enabled: false },
+      { label: "OneSignal",                enabled: false },
+      { label: "Google Maps",              enabled: false },
+      { label: "Advertisement",            enabled: false },
+      { label: "App Rating",               enabled: false },
+      { label: "Product Card",             enabled: false },
+      { label: "Product List Screen",      enabled: false },
+      { label: "WebView",                  enabled: false },
+      { label: "Phone Number Config",      enabled: false },
+      { label: "Version Update Alert",     enabled: false },
+      { label: "In-app Update (Android only)", enabled: false },
+      { label: "Product Review",           enabled: false },
+      { label: "Dynamic Link Config",      enabled: false },
+      { label: "Offline Mode",             enabled: false, badge: "new" },
+      { label: "Miscellaneous",            enabled: false },
+      { label: "Chat GPT",                 enabled: false, badge: "new" },
+    ],
+  },
+  {
+    section: "CART & CHECKOUT",
+    items: [
+      { label: "Currencies",               enabled: false },
+      { label: "Shopping Cart",            enabled: false },
+      { label: "Coupon",                   enabled: false },
+      { label: "Shipping Country",         enabled: false },
+      { label: "Checkout Screen",          enabled: false },
+      { label: "Order History",            enabled: false },
+    ],
+  },
+  {
+    section: "PAYMENT METHODS",
+    items: [
+      { label: "WebView Payment",          enabled: false },
+      { label: "Stripe Payment",           enabled: false, badge: "new" },
+    ],
+  },
+  {
+    section: "PWA",
+    items: [
+      { label: "PWA Settings",             enabled: false, badge: "new" },
+      { label: "Deploy CORS Server",       enabled: false, badge: "new" },
+    ],
+  },
+];
+
+type FeatureItem = { label: string; enabled: boolean; badge?: string };
+
+function FeatureDetailPanel({ item, onToggleEnabled }: { item: FeatureItem | null; onToggleEnabled?: (label: string) => void }) {
+  const { toast } = useToast();
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    if (item) setEnabled(item.enabled);
+  }, [item]);
+
+  const handleToggle = () => {
+    setEnabled(v => !v);
+    if (item && onToggleEnabled) onToggleEnabled(item.label);
+  };
+
+  if (!item) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Settings className="w-8 h-8 text-gray-300"/>
+        </div>
+        <p className="text-sm font-semibold text-gray-500">Select a feature</p>
+        <p className="text-xs text-gray-400 mt-1">Click any feature on the left to configure it</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">{item.label}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Configure and enable this feature for your app</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">{enabled ? "Enabled" : "Disabled"}</span>
+          <Toggle value={enabled} onChange={handleToggle}/>
+        </div>
+      </div>
+
+      {!enabled ? (
+        <div className="border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center bg-gray-50">
+          <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center mb-3 shadow-sm">
+            <Zap className="w-6 h-6 text-gray-400"/>
+          </div>
+          <p className="text-sm font-semibold text-gray-700 mb-1">Enable {item.label}</p>
+          <p className="text-xs text-gray-500 mb-4 max-w-xs">Toggle the switch above to enable this feature and access its configuration options.</p>
+          <button onClick={handleToggle}
+            className="px-5 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">
+            Enable Feature
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="border border-gray-200 rounded-xl p-4 bg-white">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full bg-green-500"/>
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Configuration</span>
+            </div>
+            {item.label.toLowerCase().includes("firebase") && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Project ID</label>
+                  <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="your-firebase-project-id"/>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">API Key</label>
+                  <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="AIzaSy..."/>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">App ID</label>
+                  <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="1:123456789:android:abc..."/>
+                </div>
+              </div>
+            )}
+            {item.label === "Languages" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Default Language</label>
+                  <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 bg-white">
+                    <option>English</option>
+                    <option>Arabic</option>
+                    <option>French</option>
+                    <option>Spanish</option>
+                    <option>German</option>
+                    <option>Turkish</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">RTL Support</span>
+                  <Toggle value={false} onChange={()=>{}}/>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Auto-detect language</span>
+                  <Toggle value={true} onChange={()=>{}}/>
+                </div>
+              </div>
+            )}
+            {item.label === "OneSignal" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">App ID</label>
+                  <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">REST API Key</label>
+                  <input type="password" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="••••••••••••"/>
+                </div>
+              </div>
+            )}
+            {!item.label.toLowerCase().includes("firebase") && item.label !== "Languages" && item.label !== "OneSignal" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-gray-600">Enable for iOS</span>
+                  <Toggle value={true} onChange={()=>{}}/>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-xs text-gray-600">Enable for Android</span>
+                  <Toggle value={true} onChange={()=>{}}/>
+                </div>
+                {item.label.includes("Stripe") && (
+                  <>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Publishable Key</label>
+                      <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="pk_live_..."/>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Secret Key</label>
+                      <input type="password" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="sk_live_..."/>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button onClick={()=>toast({ title:"Saved ✓", description:`${item?.label} settings have been saved.` })} className="px-5 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type FeaturesPanelProps = {
+  features: typeof FEATURES_DATA;
+  onToggleFeature: (label: string) => void;
+};
+
+function FeaturesPanel({ features, onToggleFeature }: FeaturesPanelProps) {
+  const [selected, setSelected] = useState<FeatureItem | null>(null);
+  const [search, setSearch]     = useState("");
+
+  const toggleFeature = (label: string) => {
+    onToggleFeature(label);
+    if (selected?.label === label) {
+      setSelected(prev => prev ? { ...prev, enabled: !prev.enabled } : null);
+    }
+  };
+
+  const filtered = features.map(group => ({
+    ...group,
+    items: group.items.filter(it =>
+      it.label.toLowerCase().includes(search.toLowerCase())
+    ),
+  })).filter(g => g.items.length > 0);
+
+  return (
+    <div className="flex-1 flex overflow-hidden bg-white">
+      <div className="w-64 border-r border-gray-100 flex flex-col overflow-hidden flex-shrink-0">
+        <div className="p-3 border-b border-gray-100">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"/>
+            <input
+              value={search} onChange={e=>setSearch(e.target.value)}
+              placeholder="Search features..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-violet-400 bg-gray-50"
+            />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto py-2">
+          {filtered.map(group => (
+            <div key={group.section} className="mb-3">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-1">{group.section}</p>
+              {group.items.map(item => (
+                <button
+                  key={item.label}
+                  onClick={()=>setSelected(item)}
+                  className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors text-left ${
+                    selected?.label === item.label
+                      ? "bg-blue-50 text-blue-700 font-semibold border-r-2 border-blue-500"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.enabled ? "bg-green-400" : "bg-gray-200"}`}/>
+                  <span className="flex-1">{item.label}</span>
+                  {item.enabled && <Check className="w-3 h-3 text-green-500 flex-shrink-0"/>}
+                  {item.badge === "new" && (
+                    <span className="text-[8px] bg-orange-100 text-orange-600 px-1 py-0.5 rounded font-bold flex-shrink-0">NEW</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <FeatureDetailPanel item={selected} onToggleEnabled={toggleFeature}/>
+    </div>
+  );
+}
+
+// =====================================================================
+// BUILD PANEL
+// =====================================================================
+type BuildTab = "ios" | "android" | "cloud";
+
+type BuildHistoryEntry = { platform: string; version: string; date: string; status: "success" | "failed" };
+
+const BUILD_STEPS = [
+  "Fetching dependencies…",
+  "Compiling Flutter sources…",
+  "Packaging assets…",
+  "Signing binary…",
+  "Uploading to cloud…",
+];
+
+function BuildPanel() {
+  const { toast } = useToast();
+  const [tab, setTab]       = useState<BuildTab>("ios");
+  const [email, setEmail]   = useState("alahdal262@gmail.com");
+  const [token, setToken]   = useState("");
+  const [lang, setLang]     = useState("English");
+  const [building, setBuilding] = useState(false);
+  const [built, setBuilt]   = useState(false);
+  const [buildProgress, setBuildProgress] = useState(0);
+  const [buildStep, setBuildStep]         = useState("");
+  const [cloudPlatform, setCloudPlatform] = useState<"iOS" | "Android" | null>(null);
+  const [buildHistory, setBuildHistory]   = useState<BuildHistoryEntry[]>([
+    { platform:"iOS",     version:"1.2.3", date:"Mar 20, 2026", status:"success" },
+    { platform:"Android", version:"1.2.2", date:"Mar 15, 2026", status:"success" },
+    { platform:"Android", version:"1.2.1", date:"Mar 10, 2026", status:"failed"  },
+    { platform:"iOS",     version:"1.2.0", date:"Mar 5, 2026",  status:"success" },
+  ]);
+
+  const runBuildAnimation = (platform?: "iOS" | "Android") => {
+    setBuilding(true);
+    setBuilt(false);
+    setBuildProgress(0);
+    setBuildStep(BUILD_STEPS[0]);
+    if (platform) setCloudPlatform(platform);
+
+    const stepDuration = 600;
+    BUILD_STEPS.forEach((step, idx) => {
+      setTimeout(() => {
+        setBuildStep(step);
+        setBuildProgress(Math.round(((idx + 1) / BUILD_STEPS.length) * 100));
+      }, idx * stepDuration);
+    });
+
+    setTimeout(() => {
+      setBuilding(false);
+      setBuilt(true);
+      setBuildProgress(100);
+      if (platform) {
+        const today = new Date().toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+        setBuildHistory(prev => [
+          { platform, version:"1.2.4", date: today, status:"success" },
+          ...prev.slice(0, 4),
+        ]);
+      }
+    }, BUILD_STEPS.length * stepDuration + 300);
+  };
+
+  const startBuild = () => runBuildAnimation();
+  const startCloudBuild = (platform: "iOS" | "Android") => runBuildAnimation(platform);
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden bg-white">
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 bg-white flex-shrink-0 px-6">
+        {([
+          { key:"ios",     label:"Test iOS",       icon:"" },
+          { key:"android", label:"Test Android",   icon:"" },
+          { key:"cloud",   label:"Build On Cloud", icon:"☁" },
+        ] as const).map(t => (
+          <button
+            key={t.key}
+            onClick={()=>{ setTab(t.key); setBuilt(false); }}
+            className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
+              tab === t.key
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-400 hover:text-gray-700"
+            }`}
+          >
+            {t.key === "ios"     && <span className="text-base"></span>}
+            {t.key === "android" && <span className="text-base"></span>}
+            {t.key === "cloud"   && <span className="text-base">☁</span>}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-8 py-8 max-w-2xl">
+        {(tab === "ios" || tab === "android") && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              Testing {tab === "ios" ? "iOS" : "Android"} app
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              You will receive a link to open {tab === "ios" ? "iPhone" : "Android"} Simulator. Make sure to{" "}
+              <a href="#" className="text-blue-600 hover:underline font-medium">install API</a>{" "}
+              or install the app on your device.
+            </p>
+
+            <div className="space-y-5">
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
+                  Email Address <HelpCircle className="w-3.5 h-3.5 text-gray-400"/>
+                </label>
+                <input
+                  value={email} onChange={e=>setEmail(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                />
+              </div>
+
+              {tab === "ios" && (
+                <div>
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
+                    Your Appetize.Io Token <HelpCircle className="w-3.5 h-3.5 text-gray-400"/>
+                  </label>
+                  <input
+                    value={token} onChange={e=>setToken(e.target.value)}
+                    placeholder="Type your Appetize.io token"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    Do not have a token?{" "}
+                    <a href="#" className="text-blue-600 hover:underline font-medium">Request an API token</a>
+                  </p>
+                </div>
+              )}
+
+              {tab === "android" && (
+                <div>
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
+                    Device Type
+                  </label>
+                  <select className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 bg-white">
+                    <option>Samsung Galaxy S21</option>
+                    <option>Pixel 6</option>
+                    <option>OnePlus 9</option>
+                    <option>Xiaomi Mi 11</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Notifications setting */}
+              <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-200 bg-gray-100/60">
+                  <p className="text-sm font-semibold text-gray-700">Notifications setting</p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Language</label>
+                    <div className="relative">
+                      <select value={lang} onChange={e=>setLang(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 bg-white appearance-none">
+                        <option>English</option>
+                        <option>Arabic</option>
+                        <option>French</option>
+                        <option>Spanish</option>
+                        <option>Turkish</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1.5">Select your preferred language for notifications.</p>
+                  </div>
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-sm text-gray-600">Enable push notifications</span>
+                    <Toggle value={true} onChange={()=>{}}/>
+                  </div>
+                </div>
+              </div>
+
+              {building && (
+                <div className="w-full max-w-xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-500">{buildStep}</span>
+                    <span className="text-xs font-semibold text-blue-600">{buildProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-2 bg-blue-500 rounded-full transition-all duration-500"
+                      style={{ width: `${buildProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={startBuild}
+                disabled={building}
+                className="flex items-center justify-center gap-2 px-8 py-3 bg-gray-200 text-gray-500 font-bold rounded-xl hover:bg-blue-600 hover:text-white disabled:opacity-70 transition-all text-sm w-full max-w-xs">
+                {building
+                  ? <><RefreshCw className="w-4 h-4 animate-spin"/> Building...</>
+                  : built
+                  ? <><Check className="w-4 h-4 text-green-500"/> Test Link Sent!</>
+                  : "Create Test"}
+              </button>
+              {built && (
+                <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <Check className="w-4 h-4"/>
+                  Test link sent to <strong>{email}</strong>. Check your inbox!
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "cloud" && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">Build On Cloud</h2>
+            <p className="text-sm text-gray-500 mb-6">Generate and download your production-ready APK or IPA file from the cloud.</p>
+
+            <div className="space-y-4">
+              {/* iOS build card */}
+              <div className="border border-gray-200 rounded-2xl p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center">
+                    <span className="text-white text-xl"></span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">iOS App (IPA)</p>
+                    <p className="text-xs text-gray-400">Build for iPhone & iPad</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => startCloudBuild("iOS")}
+                  disabled={building}
+                  className="flex items-center gap-2 px-5 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-700 disabled:opacity-60 transition-colors">
+                  {building && cloudPlatform==="iOS" ? <RefreshCw className="w-3.5 h-3.5 animate-spin"/> : <Upload className="w-3.5 h-3.5"/>}
+                  Build IPA
+                </button>
+              </div>
+
+              {/* Android build card */}
+              <div className="border border-gray-200 rounded-2xl p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center">
+                    <span className="text-white text-xl">🤖</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">Android App (APK)</p>
+                    <p className="text-xs text-gray-400">Build for all Android devices</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => startCloudBuild("Android")}
+                  disabled={building}
+                  className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white text-xs font-bold rounded-xl hover:bg-green-700 disabled:opacity-60 transition-colors">
+                  {building && cloudPlatform==="Android" ? <RefreshCw className="w-3.5 h-3.5 animate-spin"/> : <Upload className="w-3.5 h-3.5"/>}
+                  Build APK
+                </button>
+              </div>
+
+              {/* Cloud build progress */}
+              {building && cloudPlatform && (
+                <div className="border border-blue-100 bg-blue-50 rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-blue-700">Building {cloudPlatform}…</span>
+                    <span className="text-xs font-bold text-blue-600">{buildProgress}%</span>
+                  </div>
+                  <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden mb-2">
+                    <div className="h-2 bg-blue-500 rounded-full transition-all duration-500" style={{ width:`${buildProgress}%` }}/>
+                  </div>
+                  <p className="text-[11px] text-blue-500">{buildStep}</p>
+                </div>
+              )}
+
+              {/* Build history */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                  <p className="text-sm font-bold text-gray-700">Build History</p>
+                  <span className="text-xs text-gray-400">Last 5 builds</span>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {buildHistory.map((b,i)=>(
+                    <div key={i} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-base">{b.platform==="iOS"?"":"🤖"}</span>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-900">{b.platform} v{b.version}</p>
+                          <p className="text-[10px] text-gray-400">{b.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          b.status==="success"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-600"
+                        }`}>{b.status}</span>
+                        {b.status==="success" && (
+                          <button onClick={()=>toast({ title:`Downloading ${b.platform} v${b.version}`, description:"This is a demo build — no real file available." })} className="text-[10px] text-blue-600 hover:underline font-medium">Download</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// DYNAMIC LINKS PANEL
+// =====================================================================
+function DynamicLinksPanel() {
+  const [projectName, setProjectName] = useState("YEMEN TV");
+  const [created, setCreated]         = useState(false);
+  const [copying, setCopying]         = useState(false);
+
+  const subdomain = projectName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g,"");
+  const generatedUrl = `https://${subdomain}-deeplink.fluxbuilder.com`;
+
+  const handleCopy = () => {
+    setCopying(true);
+    navigator.clipboard?.writeText(generatedUrl);
+    setTimeout(()=>setCopying(false), 1500);
+  };
+
+  return (
+    <div className="flex-1 flex items-start justify-center overflow-y-auto bg-gray-50 p-8">
+      {!created ? (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm w-full max-w-2xl p-8">
+          {/* Header */}
+          <div className="flex items-start gap-4 mb-8">
+            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Link2 className="w-7 h-7 text-blue-500"/>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Create New Project</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Set up a new project to start using Fluxbuilder Dynamic Links.{" "}
+                <a href="#" className="text-blue-600 hover:underline font-medium">Refer to this guide</a>{" "}
+                for more information.
+              </p>
+            </div>
+          </div>
+
+          {/* Project Name */}
+          <div className="mb-6">
+            <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
+              <Link2 className="w-4 h-4 text-blue-500"/> Project Name
+            </label>
+            <input
+              value={projectName}
+              onChange={e=>setProjectName(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all bg-gray-50"
+            />
+            <p className="text-xs text-gray-400 mt-1.5">This will be used to identify your project and generate the subdomain</p>
+          </div>
+
+          {/* Generated Subdomain */}
+          <div className="mb-8">
+            <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
+              <Link2 className="w-4 h-4 text-blue-500"/> Generated Subdomain
+            </label>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 bg-white">
+              <Globe className="w-4 h-4 text-gray-400 flex-shrink-0"/>
+              <span className="flex-1 text-sm text-gray-700 font-mono">{generatedUrl}</span>
+              <button onClick={handleCopy} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                {copying
+                  ? <Check className="w-4 h-4 text-green-500"/>
+                  : <Copy className="w-4 h-4 text-gray-400"/>}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">Your dynamic links will be accessible at this URL</p>
+          </div>
+
+          {/* Create button */}
+          <button
+            onClick={()=>setCreated(true)}
+            disabled={!projectName.trim()}
+            className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors tracking-wide"
+          >
+            CREATE PROJECT
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm w-full max-w-2xl p-8">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <Check className="w-8 h-8 text-green-600"/>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Project Created!</h2>
+            <p className="text-sm text-gray-500 mt-1">Your dynamic links project <strong>{projectName}</strong> is ready.</p>
+          </div>
+          <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 mb-6">
+            <p className="text-xs text-gray-500 mb-1">Your deeplink URL</p>
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-blue-500"/>
+              <span className="text-sm font-mono text-blue-700 flex-1">{generatedUrl}</span>
+              <button onClick={handleCopy} className="p-1.5 rounded hover:bg-gray-200 transition-colors">
+                {copying ? <Check className="w-4 h-4 text-green-500"/> : <Copy className="w-4 h-4 text-gray-400"/>}
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="py-2.5 border border-gray-200 text-gray-600 font-semibold text-sm rounded-xl hover:bg-gray-50 transition-colors">
+              View Dashboard
+            </button>
+            <button onClick={()=>setCreated(false)}
+              className="py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-xl hover:bg-blue-700 transition-colors">
+              Create Another
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =====================================================================
+// DASHBOARD OVERVIEW PANEL
+// =====================================================================
+function DashboardOverviewPanel() {
+  const [websiteUrl, setWebsiteUrl] = useState("");
+
+  const successStories = [
+    { title:"Success Story: Dermazone Store App #102 #WebToApp", views:"9 views", emoji:"🚀" },
+    { title:"10,000+ DOWNLOADS! JoCell Shopify App Success #...", views:"17 views", emoji:"🎉" },
+    { title:"Success Story: Halwayati WooCommerce App #100 #W...", views:"39 views", emoji:"🚀" },
+    { title:"Latest FluxStore Listing app > Convert Listeo, MyListing, Listi...", views:"65 views", emoji:"" },
+    { title:"Massive Speed Boost for Cart & Checkout! > App Performance...", views:"141 views", emoji:"" },
+    { title:"Native Modern Payment for WooCommerce", views:"147 views", emoji:"" },
+  ];
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-white">
+      <div className="max-w-3xl mx-auto px-8 pt-12 pb-8">
+        <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-1">
+          Convert your Website to
+        </h1>
+        <h1 className="text-4xl font-bold leading-tight mb-8">
+          <span className="text-blue-500">Flutter app </span>
+          <span className="text-pink-500">in minutes</span>
+        </h1>
+
+        <div className="flex items-center gap-3 mb-6">
+          <input
+            value={websiteUrl}
+            onChange={e=>setWebsiteUrl(e.target.value)}
+            placeholder="Type your Website URL"
+            className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
+          />
+          <Link href="/create" className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap">
+            <Plus className="w-4 h-4"/> CREATE APP
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-3 mb-10 cursor-pointer group">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
+            <Plus className="w-5 h-5 text-white"/>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Enter a prompt, our AI builds it</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-gray-800">Start with AI</p>
+              <span className="text-[9px] px-2 py-0.5 bg-blue-500 text-white rounded-full font-bold">Beta</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h3 className="text-sm font-bold text-gray-900 mb-4">Feature update</h3>
+          <div className="bg-gray-50 border border-gray-100 rounded-xl h-64 flex items-center justify-center">
+            <p className="text-sm text-gray-300">No updates yet</p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {successStories.map((story,i)=>(
+            <div key={i} className="w-40 flex-shrink-0 cursor-pointer group">
+              <div className="aspect-video bg-gray-100 rounded-lg mb-2 flex items-center justify-center overflow-hidden border border-gray-200 group-hover:border-blue-300 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                  <ChevronRight className="w-4 h-4 text-gray-400"/>
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-700 leading-tight line-clamp-2 font-medium">
+                {story.emoji && <span>{story.emoji} </span>}{story.title}
+              </p>
+              <p className="text-[9px] text-gray-400 mt-0.5">{story.views}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =====================================================================
+// CHAT PANEL
+// =====================================================================
+function ChatPanel({ messages, onSendMessage }: { messages: ChatMessage[]; onSendMessage: (text: string) => void }) {
+  const [msg, setMsg] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSend = (text: string) => {
+    if (!text.trim()) return;
+    onSendMessage(text);
+    setMsg("");
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden bg-white">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0 bg-white">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-white"/>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900">Mobile-WP Support</p>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 bg-green-400 rounded-full"/>
+              <span className="text-[10px] text-gray-400">Online</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><Search className="w-4 h-4"/></button>
+          <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><MoreVertical className="w-4 h-4"/></button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-gray-50">
+        {messages.map((m,i)=>(
+          <div key={i} className={`flex ${m.from==="user"?"justify-end":"justify-start"}`}>
+            <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+              m.from==="user"
+                ? "bg-blue-600 text-white rounded-br-sm"
+                : "bg-white text-gray-800 border border-gray-100 rounded-bl-sm shadow-sm"
+            }`}>
+              <p className="text-sm leading-relaxed">{m.text}</p>
+              <p className={`text-[9px] mt-1 ${m.from==="user"?"text-white/60":"text-gray-400"}`}>{m.time}</p>
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef}/>
+      </div>
+
+      <div className="px-4 py-3 border-t border-gray-100 bg-white flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Plus className="w-4 h-4"/></button>
+          <input
+            value={msg}
+            onChange={e=>setMsg(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+            onKeyDown={e=>{ if(e.key==="Enter") handleSend(msg); }}
+          />
+          <button
+            onClick={()=>handleSend(msg)}
+            className={`p-2.5 rounded-xl transition-all ${msg.trim()?"bg-blue-600 text-white hover:bg-blue-700":"bg-gray-100 text-gray-300"}`}
+          >
+            <ChevronRight className="w-4 h-4"/>
+          </button>
+        </div>
+        <div className="flex gap-2 mt-2 px-1">
+          {["How to build?","Firebase setup","Connect WordPress","Payment integration"].map(q=>(
+            <button key={q} onClick={()=>handleSend(q)}
+              className="text-[10px] px-2.5 py-1 bg-gray-100 text-gray-500 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium">
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// PRODUCT LICENSE PANEL
+// =====================================================================
+function ProductLicensePanel() {
+  const [licenseKey, setLicenseKey] = useState("");
+  const [verified, setVerified]     = useState(true);
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-6">Product License</h2>
+
+      {/* Current Plan */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-4 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-white/70 uppercase tracking-wider font-semibold">Current Plan</p>
+              <p className="text-2xl font-bold mt-0.5">Regular License</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-white"/>
+              </div>
+              {verified && (
+                <span className="flex items-center gap-1 text-[10px] bg-green-400/20 text-green-100 border border-green-300/30 px-2 py-0.5 rounded-full font-bold">
+                  <Check className="w-3 h-3"/> Verified
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="p-6 space-y-3">
+          {[
+            { label:"License Type",  value:"Regular" },
+            { label:"Purchase Date", value:"January 15, 2026" },
+            { label:"Support Until", value:"July 15, 2026" },
+            { label:"Updates",       value:"Lifetime updates included" },
+          ].map(r=>(
+            <div key={r.label} className="flex items-center justify-between py-1">
+              <span className="text-xs text-gray-500">{r.label}</span>
+              <span className="text-xs font-semibold text-gray-900">{r.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* License Key */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-gray-400"/> License Key
+        </h3>
+        <div className="flex gap-2">
+          <input
+            value={licenseKey}
+            onChange={e=>setLicenseKey(e.target.value)}
+            placeholder="XXXX-XXXX-XXXX-XXXX"
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+          />
+          <button className="px-5 py-2.5 bg-violet-600 text-white text-xs font-bold rounded-xl hover:bg-violet-700 transition-colors">
+            Verify
+          </button>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-2">Enter your Envato purchase code to activate your license.</p>
+      </div>
+
+      {/* Plan Comparison */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="text-sm font-bold text-gray-700 mb-4">Compare Plans</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            {
+              name:"Regular", price:"$59", current:true,
+              features:["1 App","WordPress Integration","Basic Templates","Email Support","6 Months Updates"],
+            },
+            {
+              name:"Extended", price:"$199", current:false,
+              features:["5 Apps","All Integrations","All Templates","Priority Support","Lifetime Updates","Custom Branding"],
+            },
+            {
+              name:"Enterprise", price:"$499", current:false,
+              features:["Unlimited Apps","All Integrations","All Templates","24/7 Support","Lifetime Updates","White Label","API Access"],
+            },
+          ].map(plan=>(
+            <div key={plan.name} className={`rounded-xl border-2 p-4 transition-all ${
+              plan.current ? "border-violet-500 bg-violet-50/50" : "border-gray-100 hover:border-gray-300"
+            }`}>
+              <p className="text-sm font-bold text-gray-900">{plan.name}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{plan.price}</p>
+              <p className="text-[10px] text-gray-400 mb-3">one-time payment</p>
+              <ul className="space-y-1.5">
+                {plan.features.map(f=>(
+                  <li key={f} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Check className="w-3 h-3 text-green-500 flex-shrink-0"/> {f}
+                  </li>
+                ))}
+              </ul>
+              <button className={`w-full mt-3 py-2 text-xs font-bold rounded-xl transition-colors ${
+                plan.current
+                  ? "bg-violet-600 text-white"
+                  : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}>
+                {plan.current ? "Current Plan" : "Upgrade"}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// TOP BAR
+// =====================================================================
+function TopBar() {
+  const { toast } = useToast();
+  return (
+    <div className="h-12 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex items-center px-4 flex-shrink-0">
+      <div className="flex-1"/>
+      <div className="flex items-center gap-3">
+        <button onClick={()=>toast({title:"Help & Docs",description:"Visit the Docs page for guides and API reference."})} className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <HelpCircle className="w-4 h-4"/>
+        </button>
+        <a href="/login" className="px-5 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          Sign In
+        </a>
+        <button onClick={()=>toast({title:"More Options",description:"Additional options coming soon."})} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <MoreVertical className="w-4 h-4"/>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BottomToolbar() {
+  const { toast } = useToast();
+  return (
+    <div className="h-10 bg-white border-t border-gray-100 flex items-center justify-center gap-4 flex-shrink-0">
+      <button onClick={()=>toast({title:"Raw View",description:"Raw code view is not available in this demo."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><ArrowLeft className="w-3.5 h-3.5"/> Raw</button>
+      <button onClick={()=>toast({title:"Refreshed",description:"Preview has been refreshed."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><RotateCcw className="w-3.5 h-3.5"/></button>
+      <button onClick={()=>toast({title:"Demo Mode",description:"Launch your app in the simulator to preview on device."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><Smartphone className="w-3.5 h-3.5"/> Demo</button>
+      <div className="h-4 w-px bg-gray-200"/>
+      <button onClick={()=>toast({title:"Settings",description:"Advanced preview settings coming soon."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><Settings className="w-3.5 h-3.5"/></button>
+      <button onClick={()=>toast({title:"Grid",description:"Grid overlay toggled."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><Grid className="w-3.5 h-3.5"/></button>
+      <button onClick={()=>toast({title:"Add Widget",description:"Drag-and-drop widgets coming soon."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><Plus className="w-3.5 h-3.5"/></button>
+      <button onClick={()=>toast({title:"Zoom In",description:"Zoom controls coming soon."})} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"><ZoomIn className="w-3.5 h-3.5"/></button>
+    </div>
+  );
+}
+
+// =====================================================================
+// MAIN DASHBOARD
+// =====================================================================
+type ChatMessage = { from: string; text: string; time: string };
+const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
+  { from:"support", text:"Hi! Welcome to Mobile-WP support. How can I help you today?", time:"10:30 AM" },
+  { from:"user",    text:"How do I connect my WordPress site?", time:"10:31 AM" },
+  { from:"support", text:"Great question! Go to Server Integration (Step 1 of the Create App wizard) and enter your WordPress URL. Then select WordPress as your integration platform and run the connectivity test.", time:"10:32 AM" },
+  { from:"user",    text:"I got 4/5 tests passed. Plugin Activation failed.", time:"10:35 AM" },
+  { from:"support", text:"That's the MStore API plugin. You need to install and activate it on your WordPress site. Go to Plugins → Add New → Search for \"MStore API\" → Install & Activate. Then re-run the test.", time:"10:36 AM" },
+];
+
+export default function Dashboard() {
+  const [isDark, setIsDark]               = useState(false);
+  const [activeSection, setActiveSection] = useState<SidebarSection>("Dashboard");
+  const [activeTab, setActiveTab]         = useState<TabKey>("User");
+  const [activeLayout, setActiveLayout]   = useState<DesignLayout>("Profile");
+  const [activeDesignSub, setDesignSub]   = useState<DesignSubItem>(null);
+
+  // Dynamic tabs state
+  const [dynTabs, setDynTabs] = useState<DynamicTab[]>(DEFAULT_DYNAMIC_TABS);
+  const [activeTabId, setActiveTabId] = useState<string>("t5");
+
+  // Lifted state: features & chat persist across section changes
+  const [features, setFeatures] = useState(FEATURES_DATA);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
+  const chatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (chatTimerRef.current) clearTimeout(chatTimerRef.current); };
+  }, []);
+
+  const handleToggleFeature = (label: string) => {
+    setFeatures(prev => prev.map(group => ({
+      ...group,
+      items: group.items.map(it =>
+        it.label === label ? { ...it, enabled: !it.enabled } : it
+      ),
+    })));
+  };
+
+  const handleSendChatMessage = (text: string) => {
+    if (!text.trim()) return;
+    const time = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    setChatMessages(prev => [...prev, { from: "user", text: text.trim(), time }]);
+    if (chatTimerRef.current) clearTimeout(chatTimerRef.current);
+    chatTimerRef.current = setTimeout(() => {
+      const replyTime = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+      setChatMessages(prev => [...prev, {
+        from: "support",
+        text: "Thanks for your message! Our team will get back to you shortly. In the meantime, check out our documentation for quick answers.",
+        time: replyTime,
+      }]);
+      chatTimerRef.current = null;
+    }, 1500);
+  };
+
+  const defaults: Record<TabKey, DesignLayout> = {
+    HOME:"Home", Category:"Category", Live:"Page", Wishlist:"Wishlist", User:"Profile",
+  };
+
+  // Map dynTab id → nearest TabKey for phone preview
+  const iconToTabKey: Record<string, TabKey> = {
+    home:"HOME", category:"Category", live:"Live",
+    wishlist:"Wishlist", user:"User",
+    search:"HOME", bell:"HOME", settings:"User",
+    star:"HOME", globe:"HOME", folder:"Category",
+    layers:"HOME", bookmark:"Wishlist", list:"HOME",
+    zap:"Live", type:"HOME",
+  };
+
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab);
+    setActiveLayout(defaults[tab]);
+    setDesignSub(null);
+  };
+
+  const handleDynSelect = (id: string) => {
+    setActiveTabId(id);
+    const t = dynTabs.find(t => t.id === id);
+    if (t) {
+      const key = iconToTabKey[t.iconKey] ?? "HOME";
+      handleTabChange(key);
+    }
+  };
+
+  const handleAddTab = (tab: DynamicTab) => {
+    setDynTabs(prev => [...prev, tab]);
+  };
+
+  const handleToggleVisible = (id: string) => {
+    setDynTabs(prev => prev.map(t => t.id === id ? { ...t, visible: !t.visible } : t));
+  };
+
+  const handleDeleteTab = (id: string) => {
+    setDynTabs(prev => prev.filter(t => t.id !== id));
+    if (activeTabId === id) setActiveTabId(dynTabs[0]?.id ?? "t1");
+  };
+
+  return (
+    <div className={`flex flex-col h-screen overflow-hidden${isDark ? " dark" : ""}`}>
+      <TopBar/>
+      <div className="flex flex-1 overflow-hidden">
+        <LeftSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          activeDesignSub={activeDesignSub}
+          onDesignSubChange={setDesignSub}
+          isDark={isDark}
+          onToggleDark={() => setIsDark(d => !d)}
+        />
+
+        {/* Center content */}
+        <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {activeSection === "Dashboard"       && <DashboardOverviewPanel/>}
+            {activeSection === "Features"        && <FeaturesPanel features={features} onToggleFeature={handleToggleFeature}/>}
+            {activeSection === "Build"           && <BuildPanel/>}
+            {activeSection === "Chat"            && <ChatPanel messages={chatMessages} onSendMessage={handleSendChatMessage}/>}
+            {activeSection === "Dynamic Links"   && <DynamicLinksPanel/>}
+            {activeSection === "Product License" && <ProductLicensePanel/>}
+
+            {activeSection === "Design" && (
+              <>
+                {activeDesignSub === "Templates"  && <TemplatesPanel/>}
+                {activeDesignSub === "AppBar"     && <AppBarPanel/>}
+                {activeDesignSub === "TabBar"     && <TabBarPanel activeTab={activeTab} onTabChange={setActiveTab}/>}
+                {activeDesignSub === "Side Menu"  && <SideMenuPanel/>}
+                {activeDesignSub === "Layouts"    && <LayoutsPanel/>}
+                {activeDesignSub === null && (
+                  <div className="flex-1 flex items-center justify-center gap-6 overflow-hidden">
+                    <div className="flex-shrink-0 h-full overflow-y-auto py-4">
+                      <PageCardsPanel
+                        tabs={dynTabs}
+                        activeTabId={activeTabId}
+                        onSelect={handleDynSelect}
+                        onToggleVisible={handleToggleVisible}
+                        onAdd={handleAddTab}
+                        onDelete={handleDeleteTab}
+                      />
+                    </div>
+                    <PhonePreview activeTab={activeTab} onTabChange={handleTabChange} dynTabs={dynTabs} activeTabId={activeTabId} onDynSelect={handleDynSelect}/>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {activeSection !== "Dashboard" && <BottomToolbar/>}
+
+          {activeSection === "Dashboard" && (
+            <button className="absolute bottom-6 right-6 w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-colors z-20">
+              <Zap className="w-5 h-5"/>
+              <span className="absolute -top-1 -right-1 text-[8px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold">Beta</span>
+            </button>
+          )}
+        </div>
+
+        {activeSection === "Dashboard" ? (
+          <DashboardRightPanel/>
+        ) : (
+          <RightPanel
+            activeTab={activeTab}
+            activeLayout={activeLayout}
+            onLayoutChange={setActiveLayout}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
